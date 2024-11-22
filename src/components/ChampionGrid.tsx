@@ -1,61 +1,42 @@
-import React, { useState } from 'react';
+"use client"
+
+import React from 'react';
 import { Champion } from '../types/champions';
-import ChampionModal from './ChampionModal';
+import { API_VERSION } from '../api/items';
 
 interface ChampionGridProps {
   champions: Champion[];
+  onChampionClick: (champion: Champion) => void;
 }
 
-const ChampionGrid: React.FC<ChampionGridProps> = ({ champions }) => {
-  const [selectedChampion, setSelectedChampion] = useState<Champion | null>(null);
-
+const ChampionGrid: React.FC<ChampionGridProps> = ({ champions, onChampionClick }) => {
   return (
-    <>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        {champions.map((champion) => (
-          <button
-            key={champion.id}
-            onClick={() => setSelectedChampion(champion)}
-            className="group relative text-left"
-          >
-            <div className="relative aspect-[3/5] overflow-hidden rounded-lg bg-gray-900/40 backdrop-blur-sm
-                          border border-gray-700/30 transition-all duration-200
-                          group-hover:border-yellow-500/50 group-hover:shadow-lg group-hover:shadow-yellow-500/10">
-              <img
-                src={`https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champion.id}_0.jpg`}
-                alt={champion.name}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-300
-                         group-hover:scale-110"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
-              <div className="absolute bottom-0 left-0 right-0 p-4">
-                <h3 className="text-lg font-bold text-yellow-500">{champion.name}</h3>
-                <p className="text-sm text-gray-300 mb-2">{champion.title}</p>
-                <div className="flex flex-wrap gap-1">
-                  {champion.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2 py-1 text-xs rounded-full bg-gray-800/80 text-gray-300"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
-
-      {selectedChampion && (
-        <ChampionModal 
-          champion={selectedChampion} 
-          onClose={() => setSelectedChampion(null)} 
-        />
-      )}
-    </>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {champions.map((champion) => (
+        <button 
+          key={champion.id} 
+          onClick={() => onChampionClick(champion)}
+          className="group relative aspect-[4/3] overflow-hidden rounded-lg bg-[#1E2328] transform transition-transform duration-300 hover:scale-[1.02]"
+        >
+          <img
+            src={`https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${champion.id}_0.jpg`}
+            alt={champion.name}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <h3 className="text-white text-2xl font-bold uppercase tracking-wider mb-1">
+              {champion.name}
+            </h3>
+            <p className="text-gray-400 text-sm italic">
+              {champion.title}
+            </p>
+          </div>
+        </button>
+      ))}
+    </div>
   );
 };
 
 export default ChampionGrid;
+

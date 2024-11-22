@@ -1,108 +1,122 @@
 import React, { useState } from 'react';
 import { useItems } from '../hooks/useItems';
-import SearchBar from './SearchBar';
-import ItemFilters from './ItemFilters';
-import ItemGrid from './ItemGrid';
-import { ITEM_TYPES } from '../types/items';
+import { Search } from 'lucide-react';
+import { Item } from '../types';
+import { Input } from "./ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import ItemCard from './ItemCard';
 
-const ItemExplorer: React.FC = () => {
+const CATEGORIES = [
+  { id: 'all', label: 'Toutes les catégories' },
+  { id: 'mythic', label: 'Objets Mythiques' },
+  { id: 'legendary', label: 'Objets Légendaires' },
+  { id: 'epic', label: 'Objets Épiques' },
+  { id: 'basic', label: 'Objets Basiques' },
+  { id: 'consumable', label: 'Consommables' },
+];
+
+export default function ItemExplorer() {
   const { items, loading, error } = useItems();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState('all');
-  const [sortOrder, setSortOrder] = useState('price-desc');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [sortOrder, setSortOrder] = useState('alphabetical');
 
   const filterAndSortItems = () => {
-    let filteredItems = [...items];
+    let filtered = [...items];
 
-    // Apply type filter
-    if (selectedType !== 'all') {
-      filteredItems = filteredItems.filter(item => {
-        switch (selectedType) {
-          case ITEM_TYPES.STARTER:
-            return item.tags.includes('Lane') || item.tags.includes('Jungle');
-          case ITEM_TYPES.BOOTS:
-            return item.tags.includes('Boots');
-          case ITEM_TYPES.BASIC:
-            return !item.from && !item.tags.includes('Boots') && !item.tags.includes('Consumable') &&
-                   !item.tags.includes('Trinket') && item.gold.total <= 1000;
-          case ITEM_TYPES.EPIC:
-            return item.rarity === 'epic';
-          case ITEM_TYPES.LEGENDARY:
-            return item.rarity === 'legendary';
-          case ITEM_TYPES.MYTHIC:
-            return item.rarity === 'mythic';
-          case ITEM_TYPES.CONSUMABLE:
-            return item.consumed || item.tags.includes('Consumable');
-          case ITEM_TYPES.TRINKET:
-            return item.tags.includes('Trinket');
-          default:
-            return true;
-        }
-      });
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(item => item.category === selectedCategory);
     }
 
-    // Apply search filter
     if (searchQuery) {
-      filteredItems = filteredItems.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase())
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(item =>
+        item.name.toLowerCase().includes(query) ||
+        item.description.toLowerCase().includes(query)
       );
     }
 
-    // Apply sorting
-    switch (sortOrder) {
-      case 'price-desc':
-        filteredItems.sort((a, b) => b.gold.total - a.gold.total);
-        break;
-      case 'price-asc':
-        filteredItems.sort((a, b) => a.gold.total - b.gold.total);
-        break;
-      case 'name':
-        filteredItems.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-    }
+    filtered.sort((a, b) => {
+      if (sortOrder === 'alphabetical') {
+        return a.name.localeCompare(b.name);
+      } else if (sortOrder === 'price-asc') {
+        return a.gold.total - b.gold.total;
+      } else if (sortOrder === 'price-desc') {
+        return b.gold.total - a.gold.total;
+      }
+      return 0;
+    });
 
-    return filteredItems;
+    return filtered;
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-yellow-500 border-t-transparent"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center text-red-500 py-8">
-        Failed to load items. Please try again later.
-      </div>
-    );
-  }
 
   const filteredItems = filterAndSortItems();
 
   return (
-    <div className="space-y-4">
-      <div className="sticky top-0 z-10 bg-gray-900/95 backdrop-blur-sm py-4 space-y-4">
-        <SearchBar value={searchQuery} onChange={setSearchQuery} />
-        <ItemFilters
-          selectedType={selectedType}
-          onTypeChange={setSelectedType}
-          onSortChange={setSortOrder}
-        />
+    <div className="min-h-screen">
+      {/* Search Bar and Filters */}
+      <div className="sticky top-0 z-10 bg-[#091428]/95 backdrop-blur-sm border-b border-[#1E2328]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="relative flex-grow max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Rechercher un objet..."
+                className="pl-9 h-9 bg-[#1E2328] border-[#C89B3C] text-white placeholder-gray-400"
+              />
+            </div>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Catégorie" />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sortOrder} onValueChange={setSortOrder}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Trier par" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="alphabetical">Alphabétique</SelectItem>
+                <SelectItem value="price-asc">Prix croissant</SelectItem>
+                <SelectItem value="price-desc">Prix décroissant</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
-      {filteredItems.length > 0 ? (
-        <ItemGrid items={filteredItems} />
-      ) : (
-        <div className="text-center text-gray-400 py-8">
-          No items found matching your criteria.
-        </div>
-      )}
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#C89B3C]"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-500 py-8">
+            Une erreur est survenue lors du chargement des objets. Veuillez réessayer plus tard.
+          </div>
+        ) : (
+          <>
+            <p className="text-[#C89B3C] mb-4">
+              {filteredItems.length} objet{filteredItems.length !== 1 ? 's' : ''} trouvé{filteredItems.length !== 1 ? 's' : ''}
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {filteredItems.map((item) => (
+                <ItemCard key={item.id} item={item} />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
-};
+}
 
-export default ItemExplorer;

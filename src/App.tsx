@@ -1,8 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import ItemsPage from './pages/ItemsPage';
-import ItemPage from './pages/ItemPage';
+import ItemExplorer from './components/ItemExplorer';
+import ItemPage from './components/ItemPage';
 import ChampionsPage from './pages/ChampionsPage';
 import PlayersPage from './pages/PlayersPage';
 
@@ -24,8 +24,8 @@ const App: React.FC = () => {
         <div className="relative z-10">
           <Navbar />
           <Routes>
-            <Route path="/" element={<ItemsPage />} />
-            <Route path="/items/:id" element={<ItemPage />} />
+            <Route path="/" element={<ItemExplorer />} />
+            <Route path="/item/:id" element={<ItemPage />} />
             <Route path="/champions" element={<ChampionsPage />} />
             <Route path="/players" element={<PlayersPage />} />
           </Routes>

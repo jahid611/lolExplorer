@@ -1,73 +1,53 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react';
 import { Item } from '../types';
-import ItemTooltip from './ItemTooltip';
+import { formatGold } from '../utils';
 
 interface ItemGridProps {
   items: Item[];
+  onItemClick: (item: Item) => void;
+  onItemHover: (item: Item, event: React.MouseEvent) => void;
+  onItemLeave: () => void;
 }
 
-const ItemGrid: React.FC<ItemGridProps> = ({ items }) => {
-  const [hoveredItem, setHoveredItem] = useState<Item | null>(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    setMousePosition({ x: e.clientX, y: e.clientY });
-  };
-
-  const getRarityBorder = (item: Item) => {
-    switch (item.rarity) {
-      case 'mythic':
-        return 'border-orange-500/50 hover:border-orange-500 shadow-orange-500/20';
-      case 'legendary':
-        return 'border-purple-500/50 hover:border-purple-500 shadow-purple-500/20';
-      case 'epic':
-        return 'border-blue-500/50 hover:border-blue-500 shadow-blue-500/20';
-      default:
-        return 'border-gray-700/30 hover:border-yellow-500/50 shadow-yellow-500/20';
+const ItemGrid: React.FC<ItemGridProps> = ({ items, onItemClick, onItemHover, onItemLeave }) => {
+  const getRarityBorder = (rarity?: string) => {
+    switch (rarity) {
+      case 'mythic': return 'border-orange-500';
+      case 'legendary': return 'border-purple-500';
+      case 'epic': return 'border-blue-500';
+      default: return 'border-yellow-500';
     }
   };
 
   return (
-    <div 
-      className="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-1"
-      onMouseMove={handleMouseMove}
-    >
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
       {items.map((item) => (
-        <Link
-          key={item.id}
-          to={`/items/${item.id}`}
-          className="relative group"
-          onMouseEnter={() => setHoveredItem(item)}
-          onMouseLeave={() => setHoveredItem(null)}
+        <button 
+          key={item.id} 
+          onClick={() => onItemClick(item)}
+          onMouseEnter={(e) => onItemHover(item, e)}
+          onMouseLeave={onItemLeave}
+          className={`group relative aspect-square overflow-hidden rounded-lg bg-[#1E2328] border-2 ${getRarityBorder(item.rarity)} transform transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#C89B3C]`}
         >
-          <div 
-            className={`bg-gray-900/40 backdrop-blur-sm rounded-md p-0.5 transform transition-all duration-150 
-                      hover:scale-105 hover:shadow-lg cursor-pointer
-                      border ${getRarityBorder(item)}`}
-          >
-            <div className="relative aspect-square w-10 h-10">
-              <img
-                src={item.image}
-                alt={item.name}
-                className="w-full h-full object-cover rounded-sm"
-                loading="lazy"
-              />
-              <div className="absolute bottom-0 right-0 bg-black/80 px-1 rounded-tl text-[8px] text-yellow-500">
-                {item.gold.total}
-              </div>
-            </div>
+          <img
+            src={item.image}
+            alt={item.name}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute bottom-0 left-0 right-0 p-2 text-left opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <h3 className="text-white text-sm font-bold truncate">
+              {item.name}
+            </h3>
+            <p className="text-[#C89B3C] text-xs">
+              {formatGold(item.gold.total)}
+            </p>
           </div>
-        </Link>
+        </button>
       ))}
-      {hoveredItem && (
-        <ItemTooltip
-          item={hoveredItem}
-          position={mousePosition}
-        />
-      )}
     </div>
   );
 };
 
 export default ItemGrid;
+

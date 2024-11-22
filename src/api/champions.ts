@@ -14,6 +14,29 @@ export async function fetchChampions(): Promise<Champion[]> {
   }
 }
 
+export interface Champion {
+  id: string
+  name: string
+  title: string
+  lore: string
+  background: string
+  abilities?: Ability[]
+  skins?: Skin[]
+}
+
+export interface Ability {
+  id: string
+  name: string
+  description: string
+  icon: string
+}
+
+export interface Skin {
+  id: string
+  name: string
+  splash: string
+}
+
 export async function fetchChampionDetails(championId: string): Promise<Champion> {
   try {
     const response = await fetch(`https://ddragon.leagueoflegends.com/cdn/${API_VERSION}/data/fr_FR/champion/${championId}.json`);

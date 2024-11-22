@@ -1,63 +1,86 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Item } from '../types';
-import { ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface ItemCategoryProps {
   title: string;
   items: Item[];
-  type: string;
+  onItemClick: (item: Item) => void;
+  rarity: string;
 }
 
-const ItemCategory: React.FC<ItemCategoryProps> = ({ title, items, type }) => {
-  const getRarityBorder = (item: Item) => {
-    switch (item.rarity) {
+const ItemCategory: React.FC<ItemCategoryProps> = ({
+  title,
+  items,
+  onItemClick,
+  rarity
+}) => {
+  const getRarityColors = (rarity: string) => {
+    switch (rarity) {
       case 'mythic':
-        return 'border-orange-500/50 hover:border-orange-500 shadow-orange-500/20';
+        return 'from-orange-500/20 to-transparent border-orange-500/50';
       case 'legendary':
-        return 'border-purple-500/50 hover:border-purple-500 shadow-purple-500/20';
+        return 'from-purple-500/20 to-transparent border-purple-500/50';
       case 'epic':
-        return 'border-blue-500/50 hover:border-blue-500 shadow-blue-500/20';
+        return 'from-blue-500/20 to-transparent border-blue-500/50';
       default:
-        return 'border-gray-700/30 hover:border-yellow-500/50 shadow-yellow-500/20';
+        return 'from-yellow-500/20 to-transparent border-yellow-500/50';
     }
   };
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
+  if (items.length === 0) return null;
+
   return (
-    <div className="bg-gray-900/40 backdrop-blur-sm rounded-lg border border-gray-700/30 overflow-hidden">
-      <div className="p-4 border-b border-gray-700/30 flex items-center justify-between">
-        <h2 className="text-lg font-bold text-yellow-500">{title}</h2>
-        <ChevronRight className="w-5 h-5 text-gray-400" />
-      </div>
-      
-      <div className="p-4">
-        <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-14 xl:grid-cols-16 gap-2">
+    <div className="relative">
+      <div className={`absolute inset-0 bg-gradient-to-r ${getRarityColors(rarity)} opacity-10`} />
+      <div className="relative">
+        <h2 className="text-[#F0E6D2] text-xl font-bold mb-4">{title}</h2>
+        <motion.div 
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2"
+        >
           {items.map((item) => (
-            <Link
+            <motion.button
               key={item.id}
-              to={`/items/${item.id}`}
+              variants={item}
+              onClick={() => onItemClick(item)}
               className="relative group"
             >
-              <div 
-                className={`bg-gray-800/40 rounded-md p-0.5 transform transition-all duration-150 
-                          hover:scale-105 hover:shadow-lg cursor-pointer
-                          border ${getRarityBorder(item)}`}
-              >
-                <div className="relative aspect-square">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-full h-full object-cover rounded-sm"
-                    loading="lazy"
-                  />
-                  <div className="absolute bottom-0 right-0 bg-black/80 px-1 rounded-tl text-[10px] text-yellow-500">
+              <div className="relative w-12 h-12 rounded-md overflow-hidden border border-[#785A28] bg-[#1E2328] transition-transform duration-200 group-hover:scale-110">
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="w-full h-full object-cover"
+                />
+                {item.gold && (
+                  <div className="absolute bottom-0 right-0 bg-black/80 px-1 text-[10px] text-[#C89B3C]">
                     {item.gold.total}
                   </div>
-                </div>
+                )}
               </div>
-            </Link>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 bg-[#1E2328] border border-[#785A28] rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                <p className="text-[#F0E6D2] text-xs text-center truncate">{item.name}</p>
+              </div>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
       </div>
     </div>
   );

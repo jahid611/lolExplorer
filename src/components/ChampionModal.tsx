@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Champion, ChampionSpell, ChampionPassive } from '../types/champions';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Timer, Droplet, Target } from 'lucide-react';
 import { fetchChampionDetails } from '../api/champions';
 import { championsData } from '../data/championsData';
 
@@ -132,40 +132,43 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion, onClose }) => {
         />
         
         {/* Champion Info */}
-        <div className="absolute top-1/2 left-[10%] transform -translate-y-1/2 max-w-[40%]">
-          <h2 className="text-3xl text-[#C8AA6E] font-bold italic uppercase mb-2 tracking-wide">{fullChampionData.title}</h2>
-          <h1 className="text-8xl font-bold text-white uppercase italic tracking-wide">{fullChampionData.name}</h1>
+        <div className="absolute top-1/2 left-[10%] transform -translate-y-1/2 max-w-[40%] w-full px-4 md:px-0">
+          <h2 className="text-xl sm:text-2xl md:text-3xl text-[#C8AA6E] font-bold italic uppercase mb-2 tracking-wide">{fullChampionData.title}</h2>
+          <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold text-white uppercase italic tracking-wide">{fullChampionData.name}</h1>
         </div>
 
         {/* Champion Lore */}
-        <div className="absolute top-1/2 right-[10%] transform -translate-y-1/2 max-w-[35%]">
-          <p className="text-gray-200 leading-relaxed text-base italic">
+        <div className="absolute top-1/2 right-[10%] transform -translate-y-1/2 max-w-full md:max-w-[35%] w-full px-4 md:px-0">
+          <p className="text-gray-200 leading-relaxed text-sm sm:text-base italic">
             {fullChampionData.lore}
           </p>
         </div>
         
         {/* Skin Selection */}
-        <div className="absolute bottom-0 left-0 right-0 p-8">
-          <div className="max-w-[1400px] mx-auto relative">
-          {fullChampionData.skins.length > 3 && (
-            <button 
-              onClick={() => scrollCarousel('left')}
-              className="absolute left-[-40px] top-1/2 -translate-y-1/2 w-8 h-8
-                        text-[#C8AA6E] hover:text-[#E4C781] transition-colors z-10"
-              aria-label="Previous skins"
-            >
-              <ChevronLeft className="w-8 h-8" />
-            </button>
-          )}
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-8">
+          <div className="max-w-[1400px] mx-auto relative px-4 md:px-0">
+            {/* Navigation buttons */}
+            {fullChampionData.skins.length > 3 && (
+              <button 
+                onClick={() => scrollCarousel('left')}
+                className="absolute left-0 md:left-[-40px] top-1/2 -translate-y-1/2 w-8 h-8
+                          text-[#C8AA6E] hover:text-[#E4C781] transition-colors z-10
+                          bg-black/50 md:bg-transparent rounded-full md:rounded-none"
+                aria-label="Previous skins"
+              >
+                <ChevronLeft className="w-8 h-8" />
+              </button>
+            )}
             
+            {/* Skin carousel */}
             <div 
               ref={carouselRef}
-              className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
+              className="flex gap-2 sm:gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
             >
               {fullChampionData.skins.map((skin) => (
                 <div
                   key={skin.id}
-                  className="flex-shrink-0 w-[280px]"
+                  className="flex-shrink-0 w-[200px] sm:w-[240px] md:w-[280px]"
                 >
                   <button
                     onClick={() => setSelectedSkin(skin.num)}
@@ -179,17 +182,20 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion, onClose }) => {
                                 ${selectedSkin === skin.num ? 'scale-105' : 'hover:scale-105'}`}
                     />
                   </button>
-                  <p className="text-center mt-2 text-sm tracking-wider uppercase text-[#C8AA6E] italic font-bold">
+                  <p className="text-center mt-2 text-xs sm:text-sm tracking-wider uppercase text-[#C8AA6E] italic font-bold">
                     {skin.name === 'default' ? `${fullChampionData.name} Original` : skin.name}
                   </p>
                 </div>
               ))}
             </div>
+            
+            {/* Right navigation button */}
             {fullChampionData.skins.length > 3 && (
               <button 
                 onClick={() => scrollCarousel('right')}
-                className="absolute right-[-40px] top-1/2 -translate-y-1/2 w-8 h-8
-                          text-[#C8AA6E] hover:text-[#E4C781] transition-colors z-10"
+                className="absolute right-0 md:right-[-40px] top-1/2 -translate-y-1/2 w-8 h-8
+                          text-[#C8AA6E] hover:text-[#E4C781] transition-colors z-10
+                          bg-black/50 md:bg-transparent rounded-full md:rounded-none"
                 aria-label="Next skins"
               >
                 <ChevronRight className="w-8 h-8" />
@@ -263,7 +269,7 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion, onClose }) => {
                     Your browser does not support the video tag.
                   </video>
                 </div>
-                <div className="bg-black/20 rounded-sm p-6 w-fit">
+                <div className="w-fit">
                   <h4 className="text-2xl italic font-bold text-[#C8AA6E] mb-4">
                     {selectedAbility.ability.name}
                   </h4>
@@ -273,14 +279,17 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion, onClose }) => {
                     </p>
                     {!selectedAbility.isPassive && 'cooldownBurn' in selectedAbility.ability && (
                       <div className="flex flex-wrap gap-6 text-base border-t border-[#C8AA6E]/20 pt-4">
-                        <span className="text-blue-400">
+                        <span className="flex items-center gap-2 text-[#B4E3FF]">
+                          <Droplet className="w-4 h-4 text-white" />
                           <strong className="text-[#C8AA6E] italic font-bold">Cost:</strong> {selectedAbility.ability.costBurn}
                         </span>
-                        <span className="text-yellow-400">
+                        <span className="flex items-center gap-2 text-[#FFE4B4]">
+                          <Timer className="w-4 h-4 text-white" />
                           <strong className="text-[#C8AA6E] italic font-bold">Cooldown:</strong> {selectedAbility.ability.cooldownBurn}s
                         </span>
                         {selectedAbility.ability.rangeBurn !== "self" && (
-                          <span className="text-green-400">
+                          <span className="flex items-center gap-2 text-[#B4FFB4]">
+                            <Target className="w-4 h-4 text-white" />
                             <strong className="text-[#C8AA6E] italic font-bold">Range:</strong> {selectedAbility.ability.rangeBurn}
                           </span>
                         )}
