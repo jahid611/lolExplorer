@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sword, Users, Shield } from 'lucide-react';
+import { Home, Sword, Shield, Users } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const location = useLocation();
@@ -22,7 +22,18 @@ const Navbar: React.FC = () => {
               to="/" 
               className={`flex items-center gap-2 text-sm transition-colors ${
                 location.pathname === '/' 
-                  ? 'text-yellow-500 border-b border-yellow-500' 
+                  ? 'text-yellow-500 border-b-2 border-yellow-500' 
+                  : 'text-gray-400/80 hover:text-yellow-500'
+              }`}
+            >
+              <Home className="w-4 h-4" />
+              Accueil
+            </Link>
+            <Link 
+              to="/items" 
+              className={`flex items-center gap-2 text-sm transition-colors ${
+                location.pathname === '/items' 
+                  ? 'text-yellow-500 border-b-2 border-yellow-500' 
                   : 'text-gray-400/80 hover:text-yellow-500'
               }`}
             >
@@ -33,7 +44,7 @@ const Navbar: React.FC = () => {
               to="/champions" 
               className={`flex items-center gap-2 text-sm transition-colors ${
                 location.pathname === '/champions' 
-                  ? 'text-yellow-500 border-b border-yellow-500' 
+                  ? 'text-yellow-500 border-b-2 border-yellow-500' 
                   : 'text-gray-400/80 hover:text-yellow-500'
               }`}
             >
@@ -44,7 +55,7 @@ const Navbar: React.FC = () => {
               to="/players" 
               className={`flex items-center gap-2 text-sm transition-colors ${
                 location.pathname === '/players' 
-                  ? 'text-yellow-500 border-b border-yellow-500' 
+                  ? 'text-yellow-500 border-b-2 border-yellow-500' 
                   : 'text-gray-400/80 hover:text-yellow-500'
               }`}
             >
@@ -59,3 +70,4 @@ const Navbar: React.FC = () => {
 };
 
 export default Navbar;
+

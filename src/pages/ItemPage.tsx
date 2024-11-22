@@ -63,7 +63,7 @@ const ItemPage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <button
-        onClick={() => navigate('/')}
+        onClick={() => navigate('/items')}
         className="mb-8 px-4 py-2 bg-gray-800/50 hover:bg-gray-800/70 rounded-lg 
                  text-gray-300 hover:text-white flex items-center gap-2 transition-colors
                  border border-gray-700/30 hover:border-yellow-500/50"

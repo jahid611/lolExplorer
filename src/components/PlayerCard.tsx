@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { format } from 'date-fns';
 import { PlayerData } from '../types/riot';
 import RankIcon from './RankIcon';
@@ -36,37 +36,37 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data }) => {
   };
 
   return (
-    <div className="grid grid-cols-12 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 p-8">
       {/* Left Column - Profile & Ranked Info */}
-      <div className="col-span-3 space-y-4">
-        <div className="bg-gray-900/40 backdrop-blur-sm rounded-lg border border-gray-700/30 p-4">
+      <div className="lg:col-span-3 space-y-8">
+        <div className="bg-[#0A1428] rounded-xl border border-[#1E2328] p-8">
           <div className="flex flex-col items-center text-center">
             <img
               src={getProfileIcon(summoner.profileIconId)}
               alt="Profile Icon"
-              className="w-24 h-24 rounded-lg border-2 border-yellow-500/50 mb-3"
+              className="w-48 h-48 rounded-xl border-4 border-[#C89B3C] mb-6"
             />
-            <h2 className="text-xl font-bold text-yellow-500">
+            <h2 className="text-4xl font-bold text-[#C89B3C] mb-3">
               {account.gameName}
             </h2>
-            <p className="text-gray-400 text-sm">#{account.tagLine}</p>
-            <p className="text-gray-400 text-sm mt-1">Level {summoner.summonerLevel}</p>
+            <p className="text-[#5B5A56] text-2xl mb-2">#{account.tagLine}</p>
+            <p className="text-[#F0E6D2] text-3xl font-bold">Level {summoner.summonerLevel}</p>
           </div>
         </div>
 
         {rankedSolo && (
-          <div className="bg-gray-900/40 backdrop-blur-sm rounded-lg border border-gray-700/30 p-4">
+          <div className="bg-[#0A1428] rounded-xl border border-[#1E2328] p-8">
             <div className="text-center">
-              <RankIcon tier={rankedSolo.tier} size="lg" />
-              <h3 className="font-bold text-lg text-yellow-500 mt-2">
+              <RankIcon tier={rankedSolo.tier} size="2xl" />
+              <h3 className="font-bold text-4xl text-[#C89B3C] mt-6 mb-4">
                 {rankedSolo.tier} {rankedSolo.rank}
               </h3>
-              <p className="text-yellow-400 font-medium">
+              <p className="text-[#C89B3C] font-bold text-3xl mb-4">
                 {rankedSolo.leaguePoints} LP
               </p>
-              <div className="mt-2 text-sm text-gray-400">
-                {rankedSolo.wins}W {rankedSolo.losses}L
-                <p className="text-yellow-500">
+              <div className="text-2xl text-[#F0E6D2]">
+                <p className="mb-2">{rankedSolo.wins}W {rankedSolo.losses}L</p>
+                <p className="text-[#C89B3C] font-bold text-3xl">
                   {((rankedSolo.wins / (rankedSolo.wins + rankedSolo.losses)) * 100).toFixed(1)}% Win Rate
                 </p>
               </div>
@@ -76,15 +76,15 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data }) => {
       </div>
 
       {/* Middle Column - Match History & Stats */}
-      <div className="col-span-6 space-y-4">
-        <div className="bg-gray-900/40 backdrop-blur-sm rounded-lg border border-gray-700/30 p-4">
-          <h3 className="font-bold text-gray-300 mb-4">Recent Performance</h3>
+      <div className="lg:col-span-6 space-y-8">
+        <div className="bg-[#0A1428] rounded-xl border border-[#1E2328] p-8">
+          <h3 className="font-bold text-3xl text-[#C89B3C] mb-8">Recent Performance</h3>
           <StatsGraph data={getMatchStats()} />
         </div>
 
-        <div className="bg-gray-900/40 backdrop-blur-sm rounded-lg border border-gray-700/30 p-4">
-          <h3 className="font-bold text-gray-300 mb-4">Match History</h3>
-          <div className="space-y-2">
+        <div className="bg-[#0A1428] rounded-xl border border-[#1E2328] p-8">
+          <h3 className="font-bold text-3xl text-[#C89B3C] mb-8">Match History</h3>
+          <div className="space-y-6">
             {recentMatches.map(match => {
               const participant = match.info.participants.find(p => p.puuid === account.puuid);
               if (!participant) return null;
@@ -92,33 +92,31 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data }) => {
               return (
                 <div
                   key={match.metadata.matchId}
-                  className={`flex items-center gap-4 p-3 rounded-lg ${
-                    participant.win ? 'bg-green-500/10' : 'bg-red-500/10'
+                  className={`flex items-center gap-6 p-6 rounded-xl ${
+                    participant.win ? 'bg-[#28503C]' : 'bg-[#59343B]'
                   }`}
                 >
                   <img
                     src={getChampionImage(participant.championId)}
                     alt="Champion"
-                    className="w-12 h-12 rounded-lg"
+                    className="w-24 h-24 rounded-xl"
                   />
                   <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <span className={`font-medium ${participant.win ? 'text-green-400' : 'text-red-400'}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className={`font-bold text-3xl ${participant.win ? 'text-[#0ACF83]' : 'text-[#FF4E50]'}`}>
                         {participant.win ? 'Victory' : 'Defeat'}
                       </span>
-                      <span className="text-gray-400 text-sm">
+                      <span className="text-[#5B5A56] text-2xl">
                         {format(match.info.gameCreation, 'MMM d')}
                       </span>
                     </div>
-                    <div className="text-sm text-gray-400">
-                      <span className="font-medium text-yellow-500">
+                    <div className="text-2xl text-[#F0E6D2] flex items-center gap-6">
+                      <span className="font-bold text-[#C89B3C]">
                         {participant.kills}/{participant.deaths}/{participant.assists}
                       </span>
-                      <span className="mx-2">•</span>
                       <span>
                         {participant.totalMinionsKilled + participant.neutralMinionsKilled} CS
                       </span>
-                      <span className="mx-2">•</span>
                       <span>
                         {(participant.goldEarned / 1000).toFixed(1)}k Gold
                       </span>
@@ -132,25 +130,25 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data }) => {
       </div>
 
       {/* Right Column - Champion Mastery & Match Stats */}
-      <div className="col-span-3 space-y-4">
-        <div className="bg-gray-900/40 backdrop-blur-sm rounded-lg border border-gray-700/30 p-4">
-          <h3 className="font-bold text-gray-300 mb-3">Champion Mastery</h3>
-          <div className="space-y-2">
+      <div className="lg:col-span-3 space-y-8">
+        <div className="bg-[#0A1428] rounded-xl border border-[#1E2328] p-8">
+          <h3 className="font-bold text-3xl text-[#C89B3C] mb-8">Champion Mastery</h3>
+          <div className="space-y-4">
             {championMastery.map(mastery => (
               <div 
                 key={mastery.championId}
-                className="flex items-center gap-3 p-2 rounded-lg bg-gray-800/30 hover:bg-gray-800/50 transition-colors"
+                className="flex items-center gap-6 p-4 rounded-xl bg-[#1E2328] hover:bg-[#2B3441] transition-colors"
               >
                 <img
                   src={getChampionImage(mastery.championId)}
                   alt="Champion"
-                  className="w-10 h-10 rounded-lg"
+                  className="w-20 h-20 rounded-xl"
                 />
                 <div>
-                  <div className="text-yellow-500 text-sm font-medium">
+                  <div className="text-[#C89B3C] text-2xl font-bold mb-1">
                     Mastery {mastery.championLevel}
                   </div>
-                  <div className="text-gray-400 text-xs">
+                  <div className="text-[#F0E6D2] text-xl">
                     {(mastery.championPoints / 1000).toFixed(1)}K Points
                   </div>
                 </div>
@@ -159,7 +157,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data }) => {
           </div>
         </div>
 
-        <div className="bg-gray-900/40 backdrop-blur-sm rounded-lg border border-gray-700/30 p-4">
+        <div className="bg-[#0A1428] rounded-xl border border-[#1E2328] p-8">
           <MatchStats matches={recentMatches} puuid={account.puuid} />
         </div>
       </div>
@@ -168,3 +166,4 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data }) => {
 };
 
 export default PlayerCard;
+
