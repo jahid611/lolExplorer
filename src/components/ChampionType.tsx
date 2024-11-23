@@ -17,6 +17,9 @@ const ChampionType: React.FC<ChampionTypeProps> = ({ type, isActive, onClick }) 
         alt={type.charAt(0).toUpperCase() + type.slice(1)}
         className={`w-16 h-16 transition-all ${isActive ? 'brightness-100' : 'brightness-50'}`}
       />
+      <span className={`text-xs font-semibold uppercase ${isActive ? 'text-[#C89B3C]' : 'text-gray-400'}`}>
+        {type}
+      </span>
     </div>
   );
 };

@@ -5,6 +5,7 @@ import ItemExplorer from './components/ItemExplorer';
 import ItemPage from './components/ItemPage';
 import ChampionsPage from './pages/ChampionsPage';
 import PlayersPage from './pages/PlayersPage';
+import PlayerSearch from './components/PlayerSearch';
 
 const App: React.FC = () => {
   return (
@@ -14,7 +15,10 @@ const App: React.FC = () => {
         <Route path="/items" element={<ItemExplorer />} />
         <Route path="/item/:id" element={<ItemPage />} />
         <Route path="/champions" element={<ChampionsPage />} />
-        <Route path="/players" element={<PlayersPage />} />
+        <Route path="/players" element={<PlayersPage />}>
+          <Route index element={<PlayerSearch />} />
+          <Route path=":gameName/:tagLine" element={<PlayersPage />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

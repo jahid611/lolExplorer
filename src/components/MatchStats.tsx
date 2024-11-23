@@ -1,13 +1,15 @@
+// MatchStats.tsx
 import React from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Match } from '../types/riot';
 import { Sword, Target, Coins } from 'lucide-react';
+import MatchDetails from './MatchDetails';
+
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 interface MatchStatsProps {
-  matches: Match[];
+  matches: any[];
   puuid: string;
 }
 
@@ -21,8 +23,8 @@ const MatchStats: React.FC<MatchStatsProps> = ({ matches, puuid }) => {
     let totalGold = 0;
     let championsPlayed = new Set();
 
-    matches.forEach(match => {
-      const player = match.info.participants.find(p => p.puuid === puuid);
+    matches.forEach((match) => {
+      const player = match.info.participants.find((p: any) => p.puuid === puuid);
       if (player) {
         if (player.win) wins++;
         totalKills += player.kills;
@@ -46,19 +48,15 @@ const MatchStats: React.FC<MatchStatsProps> = ({ matches, puuid }) => {
       championsPlayed: Array.from(championsPlayed),
       chartData: {
         labels: ['Victoires', 'Défaites'],
-        datasets: [{
-          data: [wins, games - wins],
-          backgroundColor: [
-            'rgba(66, 156, 227, 0.8)',
-            'rgba(234, 76, 137, 0.8)'
-          ],
-          borderColor: [
-            'rgb(66, 156, 227)',
-            'rgb(234, 76, 137)'
-          ],
-          borderWidth: 1
-        }]
-      }
+        datasets: [
+          {
+            data: [wins, games - wins],
+            backgroundColor: ['rgba(66, 156, 227, 0.8)', 'rgba(234, 76, 137, 0.8)'],
+            borderColor: ['rgb(66, 156, 227)', 'rgb(234, 76, 137)'],
+            borderWidth: 1,
+          },
+        ],
+      },
     };
   };
 
@@ -71,7 +69,7 @@ const MatchStats: React.FC<MatchStatsProps> = ({ matches, puuid }) => {
         <div className="bg-[#091428]/90 rounded-lg p-6 border border-[#1E2328] flex flex-col items-center">
           <h3 className="text-[#C89B3C] font-bold text-lg mb-6 w-full">Win Rate</h3>
           <div className="aspect-square w-full max-w-[300px] relative">
-            <Doughnut 
+            <Doughnut
               data={stats.chartData}
               options={{
                 responsive: true,
@@ -84,10 +82,10 @@ const MatchStats: React.FC<MatchStatsProps> = ({ matches, puuid }) => {
                       color: '#C89B3C',
                       font: {
                         size: 12,
-                        weight: 'bold'
+                        weight: 'bold',
                       },
-                      padding: 20
-                    }
+                      padding: 20,
+                    },
                   },
                   tooltip: {
                     backgroundColor: '#091428',
@@ -97,9 +95,9 @@ const MatchStats: React.FC<MatchStatsProps> = ({ matches, puuid }) => {
                     borderWidth: 1,
                     padding: 12,
                     displayColors: true,
-                  }
+                  },
                 },
-                cutout: '70%'
+                cutout: '70%',
               }}
             />
             <div className="absolute inset-0 flex items-center justify-center">
@@ -171,4 +169,3 @@ const MatchStats: React.FC<MatchStatsProps> = ({ matches, puuid }) => {
 };
 
 export default MatchStats;
-
