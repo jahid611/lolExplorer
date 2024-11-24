@@ -88,6 +88,23 @@ export default function MatchDetails({ match, participant, onChampionClick }: Ma
     return ((kda * 3) + (csPerMin * 2) + damageScore / 2).toFixed(1);
   };
 
+  const getStatTooltip = (stat: string) => {
+    switch (stat) {
+      case 'kda':
+        return "KDA (Kills/Deaths/Assists) - Ratio of (Kills + Assists) to Deaths";
+      case 'cs':
+        return "CS (Creep Score) - Total minions and monsters killed";
+      case 'damage':
+        return "Total damage dealt to champions";
+      case 'taken':
+        return "Total damage taken from champions";
+      case 'vision':
+        return "Vision score - Contribution to team vision control";
+      default:
+        return "";
+    }
+  };
+
   const renderPlayerRow = (player: Participant) => {
     const kda = ((player.kills + player.assists) / Math.max(player.deaths, 1)).toFixed(2);
     const csPerMin = ((player.totalMinionsKilled || 0) + (player.neutralMinionsKilled || 0)) / (match.info.gameDuration / 60);
@@ -107,7 +124,7 @@ export default function MatchDetails({ match, participant, onChampionClick }: Ma
               <img
                 src={getChampionIconUrl(player.championName)}
                 alt={player.championName}
-                className="w-8 h-8 rounded transition-colors"
+                className="w-8 h-8 rounded-full transition-colors"
                 loading="lazy"
                 onError={() => handleImageError(`champion-${player.championName}`)}
               />
@@ -161,25 +178,35 @@ export default function MatchDetails({ match, participant, onChampionClick }: Ma
 
         {/* Stats */}
         <div className="flex items-center gap-2">
-          <div className="w-[60px]">
+          <div className="w-[60px]"
+               onMouseEnter={(e) => handleMouseEnter(getStatTooltip('kda'), e)}
+               onMouseLeave={handleMouseLeave}>
             <span className="text-[#F0E6D2] text-[10px]">{player.kills}/{player.deaths}/{player.assists}</span>
             <span className="text-[#A09B8C] text-[8px] ml-0.5">({kda})</span>
           </div>
-          <div className="w-[70px]">
+          <div className="w-[70px]"
+               onMouseEnter={(e) => handleMouseEnter(getStatTooltip('cs'), e)}
+               onMouseLeave={handleMouseLeave}>
             <span className="text-[#F0E6D2] text-[10px]">{(player.totalMinionsKilled || 0) + (player.neutralMinionsKilled || 0)}</span>
             <span className="text-[#A09B8C] text-[8px] ml-0.5">
               ({csPerMin.toFixed(1)}/min)
             </span>
           </div>
-          <div className="w-[80px]">
+          <div className="w-[80px]"
+               onMouseEnter={(e) => handleMouseEnter(getStatTooltip('damage'), e)}
+               onMouseLeave={handleMouseLeave}>
             <span className="text-[#F0E6D2] text-[10px]">{player.totalDamageDealtToChampions?.toLocaleString()}</span>
             <span className="text-[#A09B8C] text-[8px] ml-0.5">dmg</span>
           </div>
-          <div className="w-[80px]">
+          <div className="w-[80px]"
+               onMouseEnter={(e) => handleMouseEnter(getStatTooltip('taken'), e)}
+               onMouseLeave={handleMouseLeave}>
             <span className="text-[#F0E6D2] text-[10px]">{player.totalDamageTaken?.toLocaleString()}</span>
             <span className="text-[#A09B8C] text-[8px] ml-0.5">taken</span>
           </div>
-          <div className="w-[50px]">
+          <div className="w-[50px]"
+               onMouseEnter={(e) => handleMouseEnter(getStatTooltip('vision'), e)}
+               onMouseLeave={handleMouseLeave}>
             <span className="text-[#F0E6D2] text-[10px]">{player.visionScore || 0}</span>
             <span className="text-[#A09B8C] text-[8px] ml-0.5">vision</span>
           </div>
@@ -283,8 +310,7 @@ export default function MatchDetails({ match, participant, onChampionClick }: Ma
         <div className="p-0.5 bg-black/20">
           <h3 className={`text-[10px] font-semibold ${team2[0].win ? 'text-[#08D6F6]' : 'text-[#E84057]'}`}>
             {team2[0].win ? 'Victoire' : 'Défaite'} (Équipe rouge)
-          
-</h3>
+          </h3>
         </div>
         {/* Column Headers second */}
         <div className="flex items-center gap-1 py-1 px-1 text-[#8593A5] text-[10px] font-medium bg-[#31313C]">
@@ -307,7 +333,7 @@ export default function MatchDetails({ match, participant, onChampionClick }: Ma
       {/* Tooltip */}
       {tooltip && (
         <div
-          className="fixed z-50 bg-[#010A13]/95 p-4 shadow-lg pointer-events-none"
+          className="fixed z-50 bg-[#010A13]/95 p-2 shadow-lg pointer-events-none rounded max-w-[200px] text-xs"
           style={{
             top: tooltip.position.y,
             left: tooltip.position.x,

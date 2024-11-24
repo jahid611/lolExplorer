@@ -5,7 +5,7 @@ import { getProfileIconUrl, getRankIcon } from '../api/riot';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ItemTooltip } from './ItemTooltip';
 import { ChampionTooltip } from './ChampionTooltip';
-import { getChampionIconUrl as oldGetChampionIconUrl, getItemIconUrl as oldGetItemIconUrl } from '../utils/dataDragon';
+import { getChampionIconUrl, getItemIconUrl } from '../utils/dataDragon';
 import MatchDetails from './MatchDetails';
 import ChampionModal from './ChampionModal';
 
@@ -42,7 +42,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
 
   const handleChampionClick = async (championName: string) => {
     try {
-      // Update to use the correct Data Dragon version
       const response = await fetch(`https://ddragon.leagueoflegends.com/cdn/14.23.1/data/fr_FR/champion/${championName}.json`);
       const data = await response.json();
       const championData = data.data[championName];
@@ -51,16 +50,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
       console.error('Error fetching champion data:', error);
     }
   };
-
-  // Update the image URL functions to use the correct Data Dragon version
-  const getChampionIconUrl = (championName: string) => 
-    `https://ddragon.leagueoflegends.com/cdn/14.23.1/img/champion/${championName}.png`;
-
-  const getItemIconUrl = (itemId: number) => 
-    `https://ddragon.leagueoflegends.com/cdn/14.23.1/img/item/${itemId}.png`;
-
-  const getSpellIconUrl = (spellId: string) => 
-    `https://ddragon.leagueoflegends.com/cdn/14.23.1/img/spell/${spellId}.png`;
 
   const calculateWinRate = (wins: number, losses: number) => {
     const total = wins + losses;
@@ -81,6 +70,21 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
     if (match.info.queueId === 440) return 'Ranked Flex';
     return match.info.gameMode;
   };
+
+  const renderTeamColumn = (participants: Participant[]) => (
+    <div className="flex flex-col items-center space-y-1">
+      {participants.map((p, index) => (
+        <div key={index} className="flex items-center space-x-1">
+          <img
+            src={getChampionIconUrl(p.championName)}
+            alt={p.championName}
+            className="w-4 h-4 rounded-full"
+          />
+          <span className="text-xs truncate max-w-[60px]">{p.summonerName}</span>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="text-[#F0E6D2] p-4">
@@ -142,6 +146,9 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
           const isExpanded = expandedMatches[match.metadata.matchId];
           const kda = ((participant.kills + participant.assists) / Math.max(1, participant.deaths)).toFixed(2);
           const gameType = getGameType(match);
+          
+          const team1 = match.info.participants.slice(0, 5);
+          const team2 = match.info.participants.slice(5, 10);
           
           return (
             <div key={match.metadata.matchId} className={`rounded-lg p-2 ${
@@ -214,6 +221,12 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
                       )}
                     </div>
                   ))}
+                </div>
+
+                {/* Team Columns */}
+                <div className="flex gap-4 ml-4">
+                  {renderTeamColumn(team1)}
+                  {renderTeamColumn(team2)}
                 </div>
 
                 {/* Expand Button */}
