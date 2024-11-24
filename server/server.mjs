@@ -9,6 +9,11 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const RIOT_API_KEY = process.env.VITE_RIOT_API_KEY;
 
+const RIOT_API_REGIONS = {
+  EUROPE: 'europe.api.riotgames.com',
+  EUW1: 'euw1.api.riotgames.com'
+};
+
 if (!RIOT_API_KEY) {
   console.error('Erreur : Clé API Riot manquante.');
   process.exit(1);
@@ -22,79 +27,119 @@ app.use(cors({
 
 app.use(express.json());
 
-// Récupérer compte par Riot ID
+async function fetchRiotAPI(url, errorMessage) {
+  try {
+    const response = await fetch(url, {
+      headers: { 'X-Riot-Token': RIOT_API_KEY },
+    });
+
+    if (!response.ok) {
+      console.error(`Erreur API Riot (${response.status}):`, await response.text());
+      throw new Error(`${errorMessage} (${response.status})`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Erreur lors de l'appel à ${url}:`, error);
+    throw error;
+  }
+}
+
 app.get('/api/account/by-riot-id/:gameName/:tagLine', async (req, res) => {
   const { gameName, tagLine } = req.params;
+  const count = Math.min(100, Math.max(1, parseInt(req.query.count) || 20));
 
   try {
-    // 1. Récupérer le compte Riot
-    const accountResponse = await fetch(
-      `https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`,
-      { headers: { 'X-Riot-Token': RIOT_API_KEY } }
-    );
-    
-    if (!accountResponse.ok) throw new Error('Compte non trouvé');
-    const accountData = await accountResponse.json();
+    console.log(`Recherche de ${count} matchs pour ${gameName}#${tagLine}`);
 
-    // 2. Récupérer les infos d'invocateur
-    const summonerResponse = await fetch(
-      `https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${accountData.puuid}`,
-      { headers: { 'X-Riot-Token': RIOT_API_KEY } }
+    const riotAccountData = await fetchRiotAPI(
+      `https://${RIOT_API_REGIONS.EUROPE}/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`,
+      'Compte non trouvé'
     );
-    
-    if (!summonerResponse.ok) throw new Error('Invocateur non trouvé');
-    const summonerData = await summonerResponse.json();
 
-    // 3. Récupérer les rangs
-    const rankedResponse = await fetch(
-      `https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${summonerData.id}`,
-      { headers: { 'X-Riot-Token': RIOT_API_KEY } }
+    const summonerData = await fetchRiotAPI(
+      `https://${RIOT_API_REGIONS.EUW1}/lol/summoner/v4/summoners/by-puuid/${riotAccountData.puuid}`,
+      'Informations d\'invocateur non trouvées'
     );
-    
-    if (!rankedResponse.ok) throw new Error('Rangs non trouvés');
-    const rankedData = await rankedResponse.json();
 
-    res.json({
-      ...accountData,
-      ...summonerData,
-      ranked: rankedData
+    const rankedData = await fetchRiotAPI(
+      `https://${RIOT_API_REGIONS.EUW1}/lol/league/v4/entries/by-summoner/${summonerData.id}`,
+      'Informations de rang non trouvées'
+    );
+
+    let allMatchIds = [];
+    let start = 0;
+    const batchSize = 100;
+
+    while (allMatchIds.length < count) {
+      const matchIds = await fetchRiotAPI(
+        `https://${RIOT_API_REGIONS.EUROPE}/lol/match/v5/matches/by-puuid/${riotAccountData.puuid}/ids?start=${start}&count=${Math.min(batchSize, count - allMatchIds.length)}`,
+        'Liste des matchs non trouvée'
+      );
+      
+      if (matchIds.length === 0) break;
+      
+      allMatchIds = allMatchIds.concat(matchIds);
+      start += matchIds.length;
+
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Pause d'une seconde entre les requêtes
+    }
+
+    allMatchIds = allMatchIds.slice(0, count);
+
+    console.log(`Récupération de ${allMatchIds.length} matchs...`);
+
+    const matchDetailsPromises = allMatchIds.map(async (matchId, index) => {
+      try {
+        await new Promise(resolve => setTimeout(resolve, index * 200));
+        return await fetchRiotAPI(
+          `https://${RIOT_API_REGIONS.EUROPE}/lol/match/v5/matches/${matchId}`,
+          `Détails du match ${matchId} non trouvés`
+        );
+      } catch (error) {
+        console.error(`Erreur pour le match ${matchId}:`, error);
+        return null;
+      }
     });
+
+    const matchDetails = await Promise.all(matchDetailsPromises);
+    const validMatchDetails = matchDetails.filter(match => match !== null);
+
+    const playerData = {
+      ...riotAccountData,
+      ...summonerData,
+      ranks: rankedData,
+      recentMatches: validMatchDetails
+    };
+
+    console.log(`Données récupérées pour ${gameName}#${tagLine}:`);
+    console.log(`- Nombre de matchs demandés: ${count}`);
+    console.log(`- Nombre de matchs trouvés: ${validMatchDetails.length}`);
+    console.log(`- Rangs trouvés: ${rankedData.length}`);
+
+    res.json(playerData);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Erreur complète:', error);
+    res.status(500).json({ 
+      error: error.message,
+      details: error.stack
+    });
   }
 });
 
-// Récupérer les matchs par PUUID
-app.get('/api/matches/by-puuid/:puuid', async (req, res) => {
-  const { puuid } = req.params;
-
-  try {
-    // 1. Récupérer les IDs des matchs
-    const matchIdsResponse = await fetch(
-      `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=10`,
-      { headers: { 'X-Riot-Token': RIOT_API_KEY } }
-    );
-    
-    if (!matchIdsResponse.ok) throw new Error('Liste des matchs non trouvée');
-    const matchIds = await matchIdsResponse.json();
-
-    // 2. Récupérer les détails de chaque match
-    const matchDetailsPromises = matchIds.map(matchId =>
-      fetch(
-        `https://europe.api.riotg
-ames.com/lol/match/v5/matches/${matchId}`,
-        { headers: { 'X-Riot-Token': RIOT_API_KEY } }
-      ).then(res => res.json())
-    );
-
-    const matches = await Promise.all(matchDetailsPromises);
-    res.json(matches);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+app.use((err, req, res, next) => {
+  console.error('Erreur non gérée:', err);
+  res.status(500).json({
+    error: 'Erreur serveur interne',
+    details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
 });
 
 app.listen(PORT, () => {
-  console.log(`Serveur démarré sur le port ${PORT}`);
+  console.log(`\n=== Serveur démarré ===`);
+  console.log(`URL du serveur : http://localhost:${PORT}`);
+  console.log(`Routes disponibles :`);
+  console.log(`- GET /api/account/by-riot-id/:gameName/:tagLine`);
+  console.log(`========================\n`);
 });
 

@@ -1,8 +1,8 @@
 const RIOT_API_BASE_URL = 'http://localhost:4000/api';
 
-export async function getSummonerByRiotId(gameName: string, tagLine: string) {
+export async function getSummonerByRiotId(gameName: string, tagLine: string, matchCount: number = 20) {
   const response = await fetch(
-    `${RIOT_API_BASE_URL}/account/by-riot-id/${gameName}/${tagLine}`
+    `${RIOT_API_BASE_URL}/account/by-riot-id/${gameName}/${tagLine}?count=${matchCount}`
   );
   if (!response.ok) {
     throw new Error('Erreur lors de la récupération du Riot ID.');
@@ -10,34 +10,19 @@ export async function getSummonerByRiotId(gameName: string, tagLine: string) {
   return response.json();
 }
 
-export async function getPlayerStats(summonerId: string) {
-  const response = await fetch(
-    `${RIOT_API_BASE_URL}/stats/${summonerId}`
-  );
-  if (!response.ok) {
-    throw new Error('Erreur lors de la récupération des statistiques.');
-  }
-  return response.json();
+export function getProfileIconUrl(iconId: number) {
+  return `http://ddragon.leagueoflegends.com/cdn/14.23.1/img/profileicon/${iconId}.png`;
 }
 
-export async function getMatchesByPuuid(puuid: string) {
-  const response = await fetch(
-    `${RIOT_API_BASE_URL}/matches/by-puuid/${puuid}`
-  );
-  if (!response.ok) {
-    throw new Error('Erreur lors de la récupération des matchs.');
-  }
-  return response.json();
-}
-
-export function getChampionIcon(championId: string) {
-  return `http://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${championId}.png`;
+export function getChampionIcon(championName: string) {
+  return `http://ddragon.leagueoflegends.com/cdn/14.23.1/img/champion/${championName}.png`;
 }
 
 export function getItemIcon(itemId: number) {
-  return `http://ddragon.leagueoflegends.com/cdn/13.24.1/img/item/${itemId}.png`;
+  return `http://ddragon.leagueoflegends.com/cdn/14.23.1/img/item/${itemId}.png`;
 }
 
-export function getSummonerSpellIcon(spellId: number) {
-  return `http://ddragon.leagueoflegends.com/cdn/13.24.1/img/spell/${spellId}.png`;
+export function getRankIcon(tier: string) {
+  return `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem/emblem-${tier}.png`;
 }
+

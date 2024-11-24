@@ -1,25 +1,52 @@
-import React, { useState } from 'react';
-import { useItems } from '../hooks/useItems';
+import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
-import { Item } from '../types';
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import ItemCard from './ItemCard';
+import { ItemTooltip } from './ItemTooltip';
+import { fetchItemData } from '../utils/api';
 
 const CATEGORIES = [
   { id: 'all', label: 'Toutes les catégories' },
-  { id: 'mythic', label: 'Objets Mythiques' },
-  { id: 'legendary', label: 'Objets Légendaires' },
-  { id: 'epic', label: 'Objets Épiques' },
-  { id: 'basic', label: 'Objets Basiques' },
-  { id: 'consumable', label: 'Consommables' },
+  { id: 'MYTHIC', label: 'Objets Mythiques' },
+  { id: 'LEGENDARY', label: 'Objets Légendaires' },
+  { id: 'EPIC', label: 'Objets Épiques' },
+  { id: 'BASIC', label: 'Objets Basiques' },
+  { id: 'CONSUMABLE', label: 'Consommables' },
 ];
 
 export default function ItemExplorer() {
-  const { items, loading, error } = useItems();
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortOrder, setSortOrder] = useState('alphabetical');
+
+  useEffect(() => {
+    const loadItems = async () => {
+      try {
+        setLoading(true);
+        const itemData = await fetchItemData();
+        const itemArray = Object.entries(itemData.data).map(([id, item]: [string, any]) => ({
+          id,
+          ...item,
+          category: item.description.includes('Mythic') ? 'MYTHIC' : 
+                    item.description.includes('Legendary') ? 'LEGENDARY' :
+                    item.description.includes('Epic') ? 'EPIC' :
+                    item.gold.purchasable ? 'BASIC' : 'CONSUMABLE'
+        }));
+        setItems(itemArray);
+      } catch (err) {
+        setError('Une erreur est survenue lors du chargement des objets.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadItems();
+  }, []);
 
   const filterAndSortItems = () => {
     let filtered = [...items];
@@ -101,7 +128,7 @@ export default function ItemExplorer() {
           </div>
         ) : error ? (
           <div className="text-center text-red-500 py-8">
-            Une erreur est survenue lors du chargement des objets. Veuillez réessayer plus tard.
+            {error}
           </div>
         ) : (
           <>
@@ -110,7 +137,9 @@ export default function ItemExplorer() {
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {filteredItems.map((item) => (
-                <ItemCard key={item.id} item={item} />
+                <ItemTooltip key={item.id} itemId={item.id}>
+                  <ItemCard item={item} />
+                </ItemTooltip>
               ))}
             </div>
           </>

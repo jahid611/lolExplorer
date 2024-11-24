@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Item } from '../types';
 import { formatGold } from '../lib/utils';
@@ -10,9 +10,46 @@ interface ItemCardProps {
 
 export default function ItemCard({ item }: ItemCardProps) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const itemDesc = itemDescriptions[item.id as keyof typeof itemDescriptions];
-  
+
+  const updateTooltipPosition = () => {
+    if (cardRef.current && tooltipRef.current) {
+      const cardRect = cardRef.current.getBoundingClientRect();
+      const tooltipRect = tooltipRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      let top = cardRect.top;
+      let left = cardRect.right + 10;
+
+      if (left + tooltipRect.width > viewportWidth) {
+        left = cardRect.left - tooltipRect.width - 10;
+      }
+
+      if (top + tooltipRect.height > viewportHeight) {
+        top = viewportHeight - tooltipRect.height - 10;
+      }
+
+      setTooltipPosition({ top, left });
+    }
+  };
+
+  useEffect(() => {
+    if (showTooltip) {
+      updateTooltipPosition();
+      window.addEventListener('scroll', updateTooltipPosition);
+      window.addEventListener('resize', updateTooltipPosition);
+    }
+
+    return () => {
+      window.removeEventListener('scroll', updateTooltipPosition);
+      window.removeEventListener('resize', updateTooltipPosition);
+    };
+  }, [showTooltip]);
+
   const getRarityStyles = (rarity?: string) => {
     switch (rarity) {
       case 'mythic':
@@ -26,26 +63,14 @@ export default function ItemCard({ item }: ItemCardProps) {
     }
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (tooltipRef.current && !tooltipRef.current.contains(event.target as Node)) {
-        setShowTooltip(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
   return (
-    <div className="relative">
-      <Link 
-        to={`/item/${item.id}`}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-      >
+    <div 
+      ref={cardRef}
+      className="relative"
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
+      <Link to={`/item/${item.id}`}>
         <div className={`bg-[#1E2328]/80 p-2 rounded-lg hover:bg-[#2A2E35]/80 transition-colors ${getRarityStyles(item.rarity)}`}>
           <img
             src={item.image}
@@ -56,10 +81,15 @@ export default function ItemCard({ item }: ItemCardProps) {
           <p className="text-white text-center text-xs">{item.gold.total} gold</p>
         </div>
       </Link>
+      
       {showTooltip && (
         <div 
           ref={tooltipRef}
-          className="absolute z-50 w-80 p-4 bg-[#010A13]/95 border border-[#C89B3C] rounded-lg shadow-lg -top-2 left-full ml-2"
+          className="fixed z-50 w-80 p-4 bg-[#010A13]/95 border border-[#C89B3C] rounded-lg shadow-lg"
+          style={{
+            top: `${tooltipPosition.top}px`,
+            left: `${tooltipPosition.left}px`,
+          }}
         >
           <div className="flex items-start gap-4 mb-4">
             <img src={item.image} alt={item.name} className="w-16 h-16 object-contain" />
@@ -67,27 +97,35 @@ export default function ItemCard({ item }: ItemCardProps) {
               <h4 className="text-[#C89B3C] font-bold text-lg">{item.name}</h4>
               <p className="text-yellow-400 flex items-center gap-1">
                 <span className="text-lg">🪙</span> {formatGold(item.gold.total)}
+                {item.gold.base !== item.gold.total && (
+                  <span className="text-sm text-gray-400">({formatGold(item.gold.base)})</span>
+                )}
               </p>
             </div>
           </div>
+
           <div 
-            className="text-sm text-gray-300 mb-4"
+            className="text-sm text-gray-300 mb-4 space-y-2"
             dangerouslySetInnerHTML={{ __html: itemDesc?.mainText || item.description }}
           />
+
           {Object.entries(item.stats).length > 0 && (
             <div className="mb-4">
               <h5 className="text-[#C89B3C] font-semibold mb-2">Stats:</h5>
-              {Object.entries(item.stats).map(([stat, value]) => (
-                <p key={stat} className="text-sm text-gray-300">
-                  <span className="text-[#C89B3C]">{stat}:</span> {value}
-                </p>
-              ))}
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(item.stats).map(([stat, value]) => (
+                  <p key={stat} className="text-sm text-gray-300">
+                    <span className="text-[#C89B3C]">{stat}:</span> {value}
+                  </p>
+                ))}
+              </div>
             </div>
           )}
+
           {item.from && item.from.length > 0 && (
             <div className="mb-4">
               <h5 className="text-[#C89B3C] font-semibold mb-2">Recipe:</h5>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {item.from.map((itemId) => (
                   <img 
                     key={itemId}
@@ -99,10 +137,11 @@ export default function ItemCard({ item }: ItemCardProps) {
               </div>
             </div>
           )}
+
           {item.into && item.into.length > 0 && (
             <div>
               <h5 className="text-[#C89B3C] font-semibold mb-2">Builds Into:</h5>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {item.into.map((itemId) => (
                   <img 
                     key={itemId}
