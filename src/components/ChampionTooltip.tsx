@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getChampionData, getChampionIconUrl, getSpellIconUrl } from '../utils/dataDragon';
+import { getChampionData, getChampionIconUrl } from '../utils/dataDragon';
 import { Sword, Shield, Zap } from 'lucide-react';
 import ChampionAbilityPreview from './ChampionAbilityPreview';
 
@@ -7,8 +7,37 @@ interface ChampionTooltipProps {
   championName: string;
 }
 
+interface ChampionData {
+  id: string;
+  name: string;
+  title: string;
+  blurb: string;
+  info: {
+    attack: number;
+    defense: number;
+    magic: number;
+    difficulty: number;
+  };
+  tags: string[];
+  passive: {
+    name: string;
+    description: string;
+    image: {
+      full: string;
+    };
+  };
+  spells: Array<{
+    id: string;
+    name: string;
+    description: string;
+    image: {
+      full: string;
+    };
+  }>;
+}
+
 export const ChampionTooltip: React.FC<ChampionTooltipProps> = ({ championName }) => {
-  const [championData, setChampionData] = useState<any>(null);
+  const [championData, setChampionData] = useState<ChampionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [hoveredAbility, setHoveredAbility] = useState<string | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -61,8 +90,8 @@ export const ChampionTooltip: React.FC<ChampionTooltipProps> = ({ championName }
 
   if (!championData) return null;
 
-  // Use a constant for the Data Dragon version instead of process.env
   const DDRAGON_VERSION = '13.24.1';
+  const DDRAGON_BASE_URL = `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}`;
 
   return (
     <div ref={tooltipRef} className="bg-[#010A13]/95 rounded p-2 min-w-[300px] max-w-[400px]">
@@ -76,7 +105,7 @@ export const ChampionTooltip: React.FC<ChampionTooltipProps> = ({ championName }
           <h3 className="text-[#F0B232] font-bold text-sm">{championData.name}</h3>
           <p className="text-[#A09B8C] text-xs">{championData.title}</p>
           <div className="flex flex-wrap gap-1 mt-1">
-            {championData.tags.map((tag: string) => (
+            {championData.tags?.map((tag: string) => (
               <span 
                 key={tag} 
                 className="text-[9px] px-1 py-0.5 rounded-full bg-[#1E2328] text-[#C89B3C]"
@@ -93,42 +122,44 @@ export const ChampionTooltip: React.FC<ChampionTooltipProps> = ({ championName }
       <div className="grid grid-cols-2 gap-x-2 gap-y-1 mb-2 text-xs">
         <div className="flex items-center gap-1">
           <Sword className="w-3 h-3 text-[#F0B232]" />
-          <span className="text-[#C89B3C]">Attack: {championData.info.attack}</span>
+          <span className="text-[#C89B3C]">Attack: {championData.info?.attack || 0}</span>
         </div>
         <div className="flex items-center gap-1">
           <Shield className="w-3 h-3 text-[#F0B232]" />
-          <span className="text-[#C89B3C]">Defense: {championData.info.defense}</span>
+          <span className="text-[#C89B3C]">Defense: {championData.info?.defense || 0}</span>
         </div>
         <div className="flex items-center gap-1">
           <Zap className="w-3 h-3 text-[#F0B232]" />
-          <span className="text-[#C89B3C]">Magic: {championData.info.magic}</span>
+          <span className="text-[#C89B3C]">Magic: {championData.info?.magic || 0}</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-3 h-3 flex items-center justify-center text-[#F0B232]">★</div>
-          <span className="text-[#C89B3C]">Difficulty: {championData.info.difficulty}</span>
+          <span className="text-[#C89B3C]">Difficulty: {championData.info?.difficulty || 0}</span>
         </div>
       </div>
 
       <div className="grid grid-cols-5 gap-1 mb-2">
-        <div 
-          className="text-center cursor-pointer"
-          onMouseEnter={() => setHoveredAbility('P')}
-        >
-          <img 
-            src={`https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/passive/${championData.passive.image.full}`}
-            alt={championData.passive.name} 
-            className="w-8 h-8 mx-auto rounded"
-          />
-          <p className="text-[#C89B3C] text-[9px] mt-0.5">Passive</p>
-        </div>
-        {championData.spells.map((spell: any, index: number) => (
+        {championData.passive && (
+          <div 
+            className="text-center cursor-pointer"
+            onMouseEnter={() => setHoveredAbility('P')}
+          >
+            <img 
+              src={`${DDRAGON_BASE_URL}/img/passive/${championData.passive.image.full}`}
+              alt={championData.passive.name} 
+              className="w-8 h-8 mx-auto rounded"
+            />
+            <p className="text-[#C89B3C] text-[9px] mt-0.5">Passive</p>
+          </div>
+        )}
+        {championData.spells?.map((spell, index) => (
           <div 
             key={index} 
             className="text-center cursor-pointer"
             onMouseEnter={() => setHoveredAbility(['Q', 'W', 'E', 'R'][index])}
           >
             <img 
-              src={getSpellIconUrl(spell.id)}
+              src={`${DDRAGON_BASE_URL}/img/spell/${spell.image.full}`}
               alt={spell.name} 
               className="w-8 h-8 mx-auto rounded"
             />
@@ -137,7 +168,7 @@ export const ChampionTooltip: React.FC<ChampionTooltipProps> = ({ championName }
         ))}
       </div>
 
-      {hoveredAbility && (
+      {hoveredAbility && championData && (
         <ChampionAbilityPreview
           ability={hoveredAbility === 'P' ? championData.passive : championData.spells[['Q', 'W', 'E', 'R'].indexOf(hoveredAbility)]}
           championId={championData.id}

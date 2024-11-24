@@ -14,11 +14,7 @@ interface ItemData {
     total: number;
     sell: number;
   };
-  stats: {
-    [key: string]: number;
-  };
   from?: string[];
-  into?: string[];
 }
 
 export const ItemTooltip: React.FC<ItemTooltipProps> = ({ itemId }) => {
@@ -33,55 +29,27 @@ export const ItemTooltip: React.FC<ItemTooltipProps> = ({ itemId }) => {
         console.error('Error fetching item data:', error);
       }
     };
-
     fetchItemData();
   }, [itemId]);
 
   if (!itemData) return null;
 
-  // Format stats into readable text
-  const formatStats = (stats: { [key: string]: number }) => {
-    return Object.entries(stats).map(([key, value]) => {
-      const formattedKey = key
-        .replace(/([A-Z])/g, ' $1')
-        .toLowerCase()
-        .replace(/^./, str => str.toUpperCase());
-      
-      const formattedValue = key.includes('Percent') ? `${value}%` : value;
-      return `${formattedValue} ${formattedKey}`;
-    });
-  };
-
   return (
-    <div className="bg-[#010A13]/95 rounded p-2 min-w-[200px] max-w-[240px]">
-      <div className="flex items-center gap-1.5 mb-1">
-        <img 
-          src={getItemIconUrl(itemId)} 
-          alt={itemData.name} 
-          className="w-5 h-5"
-        />
-        <h3 className="text-[#F0B232] text-xs font-medium">{itemData.name}</h3>
+    <div className="bg-[#010A13]/95 rounded p-3 min-w-[240px] max-w-[280px]">
+      <div className="flex items-center gap-2 mb-2">
+        <img src={getItemIconUrl(itemId)} alt={itemData.name} className="w-8 h-8" />
+        <h3 className="text-[#F0B232] text-sm font-medium">{itemData.name}</h3>
       </div>
-
+      
       {itemData.plaintext && (
-        <p className="text-[#A09B8C] text-[11px] mb-1">{itemData.plaintext}</p>
+        <p className="text-[#A09B8C] text-xs mb-2">{itemData.plaintext}</p>
       )}
-
-      {Object.keys(itemData.stats).length > 0 && (
-        <div className="space-y-0.5 mb-1">
-          {formatStats(itemData.stats).map((stat, index) => (
-            <p key={index} className="text-[#C89B3C] text-[11px]">{stat}</p>
-          ))}
-        </div>
-      )}
-
-      <div 
-        className="text-[#F0E6D2] text-[11px] leading-tight space-y-0.5"
-        dangerouslySetInnerHTML={{ __html: itemData.description }}
-      />
-
+      
+      <div className="text-[#F0E6D2] text-xs leading-tight space-y-1" 
+           dangerouslySetInnerHTML={{ __html: itemData.description }} />
+      
       {itemData.gold && (
-        <div className="mt-1 text-[11px]">
+        <div className="mt-2 text-xs">
           <span className="text-[#C89B3C]">Cost: </span>
           <span className="text-[#F0E6D2]">{itemData.gold.total}</span>
           {itemData.gold.base !== itemData.gold.total && (
@@ -89,17 +57,17 @@ export const ItemTooltip: React.FC<ItemTooltipProps> = ({ itemId }) => {
           )}
         </div>
       )}
-
+      
       {itemData.from && itemData.from.length > 0 && (
-        <div className="mt-1">
-          <p className="text-[#C89B3C] text-[11px] mb-0.5">Recipe:</p>
-          <div className="flex gap-0.5">
-            {itemData.from.map((recipeItemId) => (
+        <div className="mt-2">
+          <p className="text-[#C89B3C] text-xs mb-1">Recipe:</p>
+          <div className="flex gap-1">
+            {itemData.from.map((recipeItemId: string) => (
               <img 
                 key={recipeItemId} 
                 src={getItemIconUrl(parseInt(recipeItemId))} 
                 alt="Recipe item" 
-                className="w-4 h-4" 
+                className="w-6 h-6" 
               />
             ))}
           </div>

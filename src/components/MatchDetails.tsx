@@ -1,38 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Match, Participant } from '../types/player';
-import { getChampionIconUrl, getItemIconUrl } from '../utils/dataDragon';
+import { 
+  getChampionIconUrl, 
+  getItemIconUrl, 
+  fetchSummonerSpells,
+  fetchRunes
+} from '../utils/dataDragon';
 import { ChampionTooltip } from './ChampionTooltip';
 import { ItemTooltip } from './ItemTooltip';
+import { MatchObjectives } from './MatchObjectives';
 
 interface MatchDetailsProps {
   match: Match;
   participant: Participant;
+  onChampionClick: (championName: string) => void;
 }
 
-export default function MatchDetails({ match, participant }: MatchDetailsProps) {
+export default function MatchDetails({ match, participant, onChampionClick }: MatchDetailsProps) {
   const [tooltip, setTooltip] = useState<{
     content: React.ReactNode;
     position: { x: number; y: number };
   } | null>(null);
+  const [summonerSpells, setSummonerSpells] = useState<Record<string, any>>({});
+  const [runes, setRunes] = useState<Record<number, any>>({});
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
-  const formatPlayerData = (p: Participant) => ({
-    championName: p.championName,
-    summonerName: p.summonerName,
-    kda: `${p.kills}/${p.deaths}/${p.assists}`,
-    damage: {
-      dealt: p.totalDamageDealtToChampions || 0,
-      received: p.totalDamageTaken || 0
-    },
-    cs: {
-      total: (p.totalMinionsKilled || 0) + (p.neutralMinionsKilled || 0),
-      perMinute: ((p.totalMinionsKilled || 0) + (p.neutralMinionsKilled || 0)) / (match.info.gameDuration / 60)
-    },
-    vision: p.visionScore || 0,
-    items: [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6].filter(Boolean)
-  });
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [spellsData, runesData] = await Promise.all([
+          fetchSummonerSpells(),
+          fetchRunes()
+        ]);
+        setSummonerSpells(spellsData);
+        setRunes(runesData);
+      } catch (error) {
+        console.error('Error loading summoner spells or runes:', error);
+      }
+    };
+    loadData();
+  }, []);
 
-  const team1 = match.info.participants.slice(0, 5).map(formatPlayerData);
-  const team2 = match.info.participants.slice(5).map(formatPlayerData);
+  const team1 = match.info.participants.slice(0, 5);
+  const team2 = match.info.participants.slice(5);
 
   const handleMouseEnter = (content: React.ReactNode, event: React.MouseEvent) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -49,103 +60,257 @@ export default function MatchDetails({ match, participant }: MatchDetailsProps) 
     setTooltip(null);
   };
 
-  const renderPlayerStats = (stats: ReturnType<typeof formatPlayerData>) => (
-    <div className="flex items-center gap-4 py-2 px-4 border-b border-[#1E2328] last:border-0 hover:bg-[#1E2328]/50 transition-colors">
-      {/* Champion Icon with Tooltip */}
-      <div className="flex items-center gap-3 w-[180px]">
-        <div 
-          className="relative"
-          onMouseEnter={(e) => handleMouseEnter(<ChampionTooltip championName={stats.championName} />, e)}
-          onMouseLeave={handleMouseLeave}
-        >
-          <img
-            src={getChampionIconUrl(stats.championName)}
-            alt={stats.championName}
-            className="w-8 h-8 rounded-lg border border-[#785A28] hover:border-[#C89B3C] transition-colors"
-          />
-        </div>
-        <div className="flex flex-col min-w-0">
-          <span className="text-[#F0E6D2] text-sm font-medium truncate">
-            {stats.summonerName}
-          </span>
-          <span className="text-[#A09B8C] text-xs">{stats.kda}</span>
-        </div>
-      </div>
+  const handleImageError = (key: string) => {
+    setImageErrors(prev => ({ ...prev, [key]: true }));
+  };
 
-      {/* Stats */}
-      <div className="flex gap-8 flex-1 text-sm">
-        <div>
-          <span className="text-[#F0E6D2]">{stats.damage.dealt.toLocaleString()}</span>
-          <span className="text-[#A09B8C] text-xs ml-1">dmg</span>
-        </div>
-        <div>
-          <span className="text-[#F0E6D2]">{stats.cs.total}</span>
-          <span className="text-[#A09B8C] text-xs ml-1">
-            ({stats.cs.perMinute.toFixed(1)})
-          </span>
-        </div>
-        <div>
-          <span className="text-[#F0E6D2]">{stats.vision}</span>
-          <span className="text-[#A09B8C] text-xs ml-1">vision</span>
-        </div>
-      </div>
+  const getSummonerSpellUrl = (spellId: number) => {
+    const spell = Object.values(summonerSpells).find(s => s.key === spellId.toString());
+    if (spell) {
+      return `https://ddragon.leagueoflegends.com/cdn/14.23.1/img/spell/${spell.id}.png`;
+    }
+    return `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/data/spells/icons2d/summoner-${spellId}.png`;
+  };
 
-      {/* Items */}
-      <div className="flex gap-1">
-        {stats.items.map((itemId, idx) => (
-          <div 
-            key={idx}
-            onMouseEnter={(e) => handleMouseEnter(<ItemTooltip itemId={itemId} />, e)}
-            onMouseLeave={handleMouseLeave}
-          >
-            <img
-              src={getItemIconUrl(itemId)}
-              alt={`Item ${idx + 1}`}
-              className="w-8 h-8 rounded border border-[#454B54] hover:border-[#C89B3C] transition-colors"
-            />
+  const getRuneUrl = (runeId: number) => {
+    const rune = runes[runeId];
+    if (rune) {
+      return `https://ddragon.leagueoflegends.com/cdn/img/${rune.icon}`;
+    }
+    return `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/styles/${runeId}.png`;
+  };
+
+  const calculateScoreOP = (player: Participant) => {
+    const kda = (player.kills + player.assists) / Math.max(1, player.deaths);
+    const csPerMin = ((player.totalMinionsKilled || 0) + (player.neutralMinionsKilled || 0)) / (match.info.gameDuration / 60);
+    const damageScore = player.totalDamageDealtToChampions ? player.totalDamageDealtToChampions / 1000 : 0;
+    
+    return ((kda * 3) + (csPerMin * 2) + damageScore / 2).toFixed(1);
+  };
+
+  const renderPlayerRow = (player: Participant) => {
+    const kda = ((player.kills + player.assists) / Math.max(player.deaths, 1)).toFixed(2);
+    const csPerMin = ((player.totalMinionsKilled || 0) + (player.neutralMinionsKilled || 0)) / (match.info.gameDuration / 60);
+    const scoreOP = calculateScoreOP(player);
+    
+    return (
+      <div key={player.puuid} className="flex items-center gap-1 py-0.5 px-1 hover:bg-black/20 transition-colors">
+        {/* Champion + Spells + Runes */}
+        <div className="flex items-center gap-1 w-[140px]">
+          <div className="relative flex items-center gap-1">
+            <div 
+              className="relative cursor-pointer"
+              onMouseEnter={(e) => handleMouseEnter(<ChampionTooltip championName={player.championName} />, e)}
+              onMouseLeave={handleMouseLeave}
+              onClick={() => onChampionClick(player.championName)}
+            >
+              <img
+                src={getChampionIconUrl(player.championName)}
+                alt={player.championName}
+                className="w-8 h-8 rounded transition-colors"
+                loading="lazy"
+                onError={() => handleImageError(`champion-${player.championName}`)}
+              />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <div className="flex gap-0.5">
+                <img
+                  src={getSummonerSpellUrl(player.summoner1Id)}
+                  alt="Summoner 1"
+                  className="w-3 h-3 rounded-sm bg-[#1E2328]"
+                  onError={() => handleImageError(`spell-${player.summoner1Id}`)}
+                />
+                <img
+                  src={getSummonerSpellUrl(player.summoner2Id)}
+                  alt="Summoner 2"
+                  className="w-3 h-3 rounded-sm bg-[#1E2328]"
+                  onError={() => handleImageError(`spell-${player.summoner2Id}`)}
+                />
+              </div>
+              <div className="flex gap-0.5">
+                {player.perks?.styles.slice(0, 2).map((style, idx) => (
+                  <img
+                    key={idx}
+                    src={getRuneUrl(style.style)}
+                    alt={`Rune ${idx + 1}`}
+                    className="w-3 h-3 bg-[#1E2328]"
+                    onError={() => handleImageError(`rune-${style.style}`)}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
-        ))}
+          
+          {/* Player Name */}
+          <div className="flex flex-col min-w-0">
+            <Link 
+              to={`/player/${player.summonerName}`}
+              className="text-[#F0E6D2] text-[10px] font-medium truncate hover:text-[#C89B3C] transition-colors"
+            >
+              {player.summonerName}
+            </Link>
+            <span className="text-[#A09B8C] text-[8px]">{player.championName}</span>
+          </div>
+        </div>
+
+        {/* Score OP */}
+        <div className="w-[50px] text-center">
+          <span className="text-[#C89B3C] text-[10px] font-medium">{scoreOP}</span>
+          <span className="text-[#A09B8C] text-[8px] block">Score</span>
+        </div>
+
+        {/* Stats */}
+        <div className="flex items-center gap-2">
+          <div className="w-[60px]">
+            <span className="text-[#F0E6D2] text-[10px]">{player.kills}/{player.deaths}/{player.assists}</span>
+            <span className="text-[#A09B8C] text-[8px] ml-0.5">({kda})</span>
+          </div>
+          <div className="w-[70px]">
+            <span className="text-[#F0E6D2] text-[10px]">{(player.totalMinionsKilled || 0) + (player.neutralMinionsKilled || 0)}</span>
+            <span className="text-[#A09B8C] text-[8px] ml-0.5">
+              ({csPerMin.toFixed(1)}/min)
+            </span>
+          </div>
+          <div className="w-[80px]">
+            <span className="text-[#F0E6D2] text-[10px]">{player.totalDamageDealtToChampions?.toLocaleString()}</span>
+            <span className="text-[#A09B8C] text-[8px] ml-0.5">dmg</span>
+          </div>
+          <div className="w-[80px]">
+            <span className="text-[#F0E6D2] text-[10px]">{player.totalDamageTaken?.toLocaleString()}</span>
+            <span className="text-[#A09B8C] text-[8px] ml-0.5">taken</span>
+          </div>
+          <div className="w-[50px]">
+            <span className="text-[#F0E6D2] text-[10px]">{player.visionScore || 0}</span>
+            <span className="text-[#A09B8C] text-[8px] ml-0.5">vision</span>
+          </div>
+        </div>
+
+        {/* Items */}
+        <div className="flex gap-0.5 ml-auto">
+          {[
+            player.item0,
+            player.item1,
+            player.item2,
+            player.item3,
+            player.item4,
+            player.item5,
+            player.item6
+          ].map((itemId, idx) => (
+            itemId ? (
+              <div 
+                key={idx}
+                onMouseEnter={(e) => handleMouseEnter(<ItemTooltip itemId={itemId} />, e)}
+                onMouseLeave={handleMouseLeave}
+                className="w-5 h-5 bg-[#1E2328] rounded-sm overflow-hidden flex items-center justify-center"
+              >
+                <img
+                  src={getItemIconUrl(itemId)}
+                  alt={`Item ${idx + 1}`}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  onError={() => handleImageError(`item-${itemId}`)}
+                />
+              </div>
+            ) : (
+              <div key={idx} className="w-5 h-5 bg-[#1E2328] rounded-sm" />
+            )
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+  // Calculate team objectives
+  const team1Objectives = {
+    dragons: match.info.teams[0].objectives.dragon.kills,
+    barons: match.info.teams[0].objectives.baron.kills,
+    towers: match.info.teams[0].objectives.tower.kills,
+    inhibitors: match.info.teams[0].objectives.inhibitor.kills,
+    heralds: match.info.teams[0].objectives.riftHerald.kills,
+    voidgrubs: match.info.teams[0].objectives.voidgrub?.kills || 0,
+    kills: match.info.teams[0].objectives.champion.kills,
+    gold: team1.reduce((sum, p) => sum + p.goldEarned, 0),
+  }
+
+  const team2Objectives = {
+    dragons: match.info.teams[1].objectives.dragon.kills,
+    barons: match.info.teams[1].objectives.baron.kills,
+    towers: match.info.teams[1].objectives.tower.kills,
+    inhibitors: match.info.teams[1].objectives.inhibitor.kills,
+    heralds: match.info.teams[1].objectives.riftHerald.kills,
+    voidgrubs: match.info.teams[1].objectives.voidgrub?.kills || 0,
+    kills: match.info.teams[1].objectives.champion.kills,
+    gold: team2.reduce((sum, p) => sum + p.goldEarned, 0),
+  }
 
   return (
-    <div className="mt-4 bg-[#0A1428] rounded-lg overflow-hidden">
-      <div className="space-y-4 p-4">
-        {/* Team 1 */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
-            <h3 className="text-[#F0B232] text-sm font-semibold">Équipe 1</h3>
-          </div>
-          <div className="bg-[#1A1C21]/50 rounded-lg overflow-hidden">
-            {team1.map((player, idx) => (
-              <div key={idx}>{renderPlayerStats(player)}</div>
-            ))}
-          </div>
+    <div className="space-y-1 overflow-x-auto">
+      {/* Team 1 */}
+      <div className={`overflow-hidden ${team1[0].win ? 'bg-[#28344E]' : 'bg-[#59343B]'}`}>
+        {/* Status first */}
+        <div className="p-0.5 bg-black/20">
+          <h3 className={`text-[10px] font-semibold ${team1[0].win ? 'text-[#08D6F6]' : 'text-[#E84057]'}`}>
+            {team1[0].win ? 'Victoire' : 'Défaite'} (Équipe bleue)
+          </h3>
         </div>
-
-        {/* Team 2 */}
+        {/* Column Headers second */}
+        <div className="flex items-center gap-1 py-1 px-1 text-[#8593A5] text-[10px] font-medium bg-[#31313C]">
+          <div className="w-[140px]">Champion</div>
+          <div className="w-[50px] text-center">Score OP</div>
+          <div className="flex items-center gap-2">
+            <div className="w-[60px]">KDA</div>
+            <div className="w-[70px]">CS</div>
+            <div className="w-[80px]">Damage</div>
+            <div className="w-[80px]">Taken</div>
+            <div className="w-[50px]">Vision</div>
+          </div>
+          <div className="ml-auto">Items</div>
+        </div>
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-1 h-4 bg-red-500 rounded-full"></div>
-            <h3 className="text-[#F0B232] text-sm font-semibold">Équipe 2</h3>
+          {team1.map(renderPlayerRow)}
+        </div>
+      </div>
+
+      {/* Match Objectives */}
+      <MatchObjectives 
+        team1={team1Objectives}
+        team2={team2Objectives}
+      />
+
+      {/* Team 2 */}
+      <div className={`overflow-hidden ${team2[0].win ? 'bg-[#28344E]' : 'bg-[#59343B]'}`}>
+        {/* Status first */}
+        <div className="p-0.5 bg-black/20">
+          <h3 className={`text-[10px] font-semibold ${team2[0].win ? 'text-[#08D6F6]' : 'text-[#E84057]'}`}>
+            {team2[0].win ? 'Victoire' : 'Défaite'} (Équipe rouge)
+          
+</h3>
+        </div>
+        {/* Column Headers second */}
+        <div className="flex items-center gap-1 py-1 px-1 text-[#8593A5] text-[10px] font-medium bg-[#31313C]">
+          <div className="w-[140px]">Champion</div>
+          <div className="w-[50px] text-center">Score OP</div>
+          <div className="flex items-center gap-2">
+            <div className="w-[60px]">KDA</div>
+            <div className="w-[70px]">CS</div>
+            <div className="w-[80px]">Damage</div>
+            <div className="w-[80px]">Taken</div>
+            <div className="w-[50px]">Vision</div>
           </div>
-          <div className="bg-[#1A1C21]/50 rounded-lg overflow-hidden">
-            {team2.map((player, idx) => (
-              <div key={idx}>{renderPlayerStats(player)}</div>
-            ))}
-          </div>
+          <div className="ml-auto">Items</div>
+        </div>
+        <div>
+          {team2.map(renderPlayerRow)}
         </div>
       </div>
 
       {/* Tooltip */}
       {tooltip && (
         <div
-          className="fixed z-50 bg-[#010A13]/95 border border-[#C89B3C] rounded-lg p-4 shadow-lg pointer-events-none"
+          className="fixed z-50 bg-[#010A13]/95 p-4 shadow-lg pointer-events-none"
           style={{
-            top: `${tooltip.position.y}px`,
-            left: `${tooltip.position.x}px`,
+            top: tooltip.position.y,
+            left: tooltip.position.x,
           }}
         >
           {tooltip.content}

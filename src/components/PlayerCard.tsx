@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { PlayerData, Match, Participant } from '../types/player';
 import { getProfileIconUrl, getRankIcon } from '../api/riot';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ItemTooltip } from './ItemTooltip';
 import { ChampionTooltip } from './ChampionTooltip';
-import { getChampionIconUrl, getItemIconUrl } from '../utils/dataDragon';
+import { getChampionIconUrl as oldGetChampionIconUrl, getItemIconUrl as oldGetItemIconUrl } from '../utils/dataDragon';
 import MatchDetails from './MatchDetails';
 import ChampionModal from './ChampionModal';
 
@@ -42,6 +42,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
 
   const handleChampionClick = async (championName: string) => {
     try {
+      // Update to use the correct Data Dragon version
       const response = await fetch(`https://ddragon.leagueoflegends.com/cdn/14.23.1/data/fr_FR/champion/${championName}.json`);
       const data = await response.json();
       const championData = data.data[championName];
@@ -50,6 +51,16 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
       console.error('Error fetching champion data:', error);
     }
   };
+
+  // Update the image URL functions to use the correct Data Dragon version
+  const getChampionIconUrl = (championName: string) => 
+    `https://ddragon.leagueoflegends.com/cdn/14.23.1/img/champion/${championName}.png`;
+
+  const getItemIconUrl = (itemId: number) => 
+    `https://ddragon.leagueoflegends.com/cdn/14.23.1/img/item/${itemId}.png`;
+
+  const getSpellIconUrl = (spellId: string) => 
+    `https://ddragon.leagueoflegends.com/cdn/14.23.1/img/spell/${spellId}.png`;
 
   const calculateWinRate = (wins: number, losses: number) => {
     const total = wins + losses;
@@ -133,7 +144,11 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
           const gameType = getGameType(match);
           
           return (
-            <div key={match.metadata.matchId} className="bg-[#1A1C21] rounded-lg p-2">
+            <div key={match.metadata.matchId} className={`rounded-lg p-2 ${
+                participant.win 
+                  ? 'bg-gradient-to-r from-[#28344E] to-[#28344E]/80' 
+                  : 'bg-gradient-to-r from-[#59343B] to-[#59343B]/80'
+              }`}>
               <div className="flex items-center gap-4">
                 {/* Game Info */}
                 <div className="w-32">
@@ -155,6 +170,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
                     src={getChampionIconUrl(participant.championName)}
                     alt={participant.championName}
                     className="w-12 h-12 rounded-lg transition-colors hover:ring-2 hover:ring-[#C89B3C]"
+                    loading="lazy"
                   />
                 </div>
 
@@ -191,6 +207,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
                           src={getItemIconUrl(itemId)}
                           alt={`Item ${idx + 1}`}
                           className="w-8 h-8 rounded border border-[#454B54] hover:border-[#C89B3C] transition-colors"
+                          loading="lazy"
                         />
                       ) : (
                         <div className="w-8 h-8 bg-[#1E2328] rounded border border-[#454B54]" />
@@ -208,7 +225,19 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
                 </button>
               </div>
 
-              {isExpanded && <MatchDetails match={match} participant={participant} />}
+              {isExpanded && (
+                <div className={`mt-4 rounded-lg overflow-hidden ${
+                  participant.win 
+                    ? 'bg-[#1E2328]/50' 
+                    : 'bg-[#2C1C1F]/50'
+                }`}>
+                  <MatchDetails 
+                    match={match} 
+                    participant={participant} 
+                    onChampionClick={handleChampionClick}
+                  />
+                </div>
+              )}
             </div>
           );
         })}
