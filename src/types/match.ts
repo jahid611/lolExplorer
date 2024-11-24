@@ -1,33 +1,32 @@
-export interface MatchParticipant {
-    summonerName: string;
-    championId: string;
-    championName: string;
-    champLevel: number;
-    summoner1Id: number;
-    summoner2Id: number;
-    items: number[];
-    kills: number;
-    deaths: number;
-    assists: number;
-    totalMinionsKilled: number;
-    neutralMinionsKilled: number;
-    goldEarned: number;
-    win: boolean;
-    teamId: number;
-    championMastery?: {
-      level: number;
-      points: number;
-    };
-  }
-  
-  export interface Match {
-    gameId: string;
-    gameDuration: number;
-    gameCreation: number;
-    participants: MatchParticipant[];
-    totalGold: {
-      team100: number;
-      team200: number;
-    };
-  }
-  
+export interface MatchPlayer {
+  championId: string;
+  championName: string;
+  championLevel: number;
+  summonerName: string;
+  teamId: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  items: number[];
+  summoner1Id: number;
+  summoner2Id: number;
+  win: boolean;
+  role: string;
+}
+
+export interface Match {
+  gameId: string;
+  gameType: string;
+  gameDuration: number;
+  gameCreation: number;
+  participants: MatchPlayer[];
+}
+
+export interface PlayerStats {
+  tier: string;
+  rank: string;
+  leaguePoints: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+}
