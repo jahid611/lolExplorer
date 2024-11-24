@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PlayerData, Match, Participant } from '../types/player';
 import { getProfileIconUrl, getRankIcon } from '../api/riot';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -6,6 +7,7 @@ import { ItemTooltip } from './ItemTooltip';
 import { ChampionTooltip } from './ChampionTooltip';
 import { getChampionIconUrl, getItemIconUrl } from '../utils/dataDragon';
 import MatchDetails from './MatchDetails';
+import ChampionModal from './ChampionModal';
 
 interface PlayerCardProps {
   data: PlayerData;
@@ -19,6 +21,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
     content: React.ReactNode;
     position: { x: number; y: number };
   } | null>(null);
+  const [selectedChampion, setSelectedChampion] = useState<any>(null);
 
   const soloQueue = ranks.find(rank => rank?.queueType === 'RANKED_SOLO_5x5');
 
@@ -37,6 +40,17 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
     setTooltip(null);
   };
 
+  const handleChampionClick = async (championName: string) => {
+    try {
+      const response = await fetch(`https://ddragon.leagueoflegends.com/cdn/14.23.1/data/fr_FR/champion/${championName}.json`);
+      const data = await response.json();
+      const championData = data.data[championName];
+      setSelectedChampion(championData);
+    } catch (error) {
+      console.error('Error fetching champion data:', error);
+    }
+  };
+
   const calculateWinRate = (wins: number, losses: number) => {
     const total = wins + losses;
     return total > 0 ? Math.round((wins / total) * 100) : 0;
@@ -51,6 +65,12 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
     return `il y a ${days} jour${days > 1 ? 's' : ''}`;
   };
 
+  const getGameType = (match: Match) => {
+    if (match.info.queueId === 420) return 'Ranked Solo/Duo';
+    if (match.info.queueId === 440) return 'Ranked Flex';
+    return match.info.gameMode;
+  };
+
   return (
     <div className="text-[#F0E6D2] p-4">
       {/* Player Profile */}
@@ -60,7 +80,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
             <img
               src={getProfileIconUrl(profileIconId)}
               alt="Profile Icon"
-              className="w-24 h-24 rounded-lg border-2 border-[#C89B3C]"
+              className="w-24 h-24 rounded-lg"
             />
             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[#C89B3C] px-2 py-0.5 rounded text-sm">
               {summonerLevel}
@@ -110,13 +130,14 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
           
           const isExpanded = expandedMatches[match.metadata.matchId];
           const kda = ((participant.kills + participant.assists) / Math.max(1, participant.deaths)).toFixed(2);
+          const gameType = getGameType(match);
           
           return (
             <div key={match.metadata.matchId} className="bg-[#1A1C21] rounded-lg p-2">
               <div className="flex items-center gap-4">
                 {/* Game Info */}
-                <div className="w-24">
-                  <div className="text-xs text-[#8593A5]">{match.info.gameMode === 'CLASSIC' ? 'Normal' : match.info.gameMode}</div>
+                <div className="w-32">
+                  <div className="text-xs text-[#8593A5]">{gameType}</div>
                   <div className="text-xs text-[#8593A5]">{getTimeAgo(match.info.gameCreation)}</div>
                   <div className={`text-sm ${participant.win ? 'text-[#08D6F6]' : 'text-[#FF4E50]'}`}>
                     {participant.win ? 'Victoire' : 'Défaite'}
@@ -125,14 +146,15 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
 
                 {/* Champion Icon */}
                 <div 
-                  className="relative"
+                  className="relative cursor-pointer"
                   onMouseEnter={(e) => handleMouseEnter(<ChampionTooltip championName={participant.championName} />, e)}
                   onMouseLeave={handleMouseLeave}
+                  onClick={() => handleChampionClick(participant.championName)}
                 >
                   <img
                     src={getChampionIconUrl(participant.championName)}
                     alt={participant.championName}
-                    className="w-12 h-12 rounded-lg border border-[#785A28] hover:border-[#C89B3C] transition-colors"
+                    className="w-12 h-12 rounded-lg transition-colors hover:ring-2 hover:ring-[#C89B3C]"
                   />
                 </div>
 
@@ -195,7 +217,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
       {/* Tooltip */}
       {tooltip && (
         <div
-          className="fixed z-50 bg-[#010A13]/95 border border-[#C89B3C] rounded-lg p-4 shadow-lg pointer-events-none"
+          className="fixed z-50 bg-[#010A13]/95 rounded-lg p-4 shadow-lg pointer-events-none"
           style={{
             top: `${tooltip.position.y}px`,
             left: `${tooltip.position.x}px`,
@@ -203,6 +225,14 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
         >
           {tooltip.content}
         </div>
+      )}
+
+      {/* Champion Modal */}
+      {selectedChampion && (
+        <ChampionModal 
+          champion={selectedChampion} 
+          onClose={() => setSelectedChampion(null)} 
+        />
       )}
     </div>
   );

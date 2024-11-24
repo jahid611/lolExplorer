@@ -22,6 +22,8 @@ export const CustomTooltipProvider: React.FC<{ children: React.ReactNode }> = ({
     position: { x: number; y: number };
   } | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isMouseOverTooltipRef = useRef(false);
 
   const updatePosition = (x: number, y: number) => {
     if (tooltipRef.current) {
@@ -44,6 +46,10 @@ export const CustomTooltipProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const showTooltip = (content: React.ReactNode, event: React.MouseEvent) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
     setTooltip({
       content,
       position: { x: event.clientX, y: event.clientY }
@@ -57,7 +63,29 @@ export const CustomTooltipProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const hideTooltip = () => {
-    setTooltip(null);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // Only hide if mouse is not over tooltip
+    if (!isMouseOverTooltipRef.current) {
+      timeoutRef.current = setTimeout(() => {
+        setTooltip(null);
+      }, 100);
+    }
+  };
+
+  const handleTooltipMouseEnter = () => {
+    isMouseOverTooltipRef.current = true;
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  const handleTooltipMouseLeave = () => {
+    isMouseOverTooltipRef.current = false;
+    hideTooltip();
   };
 
   return (
@@ -70,8 +98,9 @@ export const CustomTooltipProvider: React.FC<{ children: React.ReactNode }> = ({
           style={{
             top: `${tooltip.position.y}px`,
             left: `${tooltip.position.x}px`,
-            pointerEvents: 'none',
           }}
+          onMouseEnter={handleTooltipMouseEnter}
+          onMouseLeave={handleTooltipMouseLeave}
         >
           {tooltip.content}
         </div>
