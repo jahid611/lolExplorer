@@ -20,7 +20,7 @@ if (!RIOT_API_KEY) {
 }
 
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: 'https://lol-explorer-hpkch6h5v-jahid611s-projects.vercel.app/',
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
