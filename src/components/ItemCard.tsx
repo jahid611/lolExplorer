@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Item } from '../types';
 import { formatGold } from '../lib/utils';
-import itemDescriptions from '../data/itemdesc.json';
 
 interface ItemCardProps {
   item: Item;
@@ -13,7 +12,6 @@ export default function ItemCard({ item }: ItemCardProps) {
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const itemDesc = itemDescriptions[item.id as keyof typeof itemDescriptions];
 
   const updateTooltipPosition = () => {
     if (cardRef.current && tooltipRef.current) {
@@ -106,7 +104,6 @@ export default function ItemCard({ item }: ItemCardProps) {
 
           <div 
             className="text-sm text-gray-300 mb-4 space-y-2"
-            dangerouslySetInnerHTML={{ __html: itemDesc?.mainText || item.description }}
           />
 
           {Object.entries(item.stats).length > 0 && (

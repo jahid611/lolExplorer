@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion, AnimatePresence } from "framer-motion";
 import { X } from 'lucide-react';
 import { Item } from '../types';
 import { formatGold } from '../lib/utils';
@@ -155,7 +154,6 @@ const ItemModal: React.FC<ItemModalProps> = ({ item, onClose }) => {
               <div className="bg-gray-800/30 rounded-lg p-4">
                 <h4 className="text-sm font-medium text-gray-300 mb-3">Gold Efficiency</h4>
                 <p className="text-sm text-gray-300">
-                  {item.name}'s base stats are {Math.round(item.goldEfficiency * 100)}% gold efficient.
                 </p>
               </div>
             </TabsContent>

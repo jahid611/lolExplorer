@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Champion, ChampionSpell, ChampionPassive } from '../types/champions';
 import { X, ChevronLeft, ChevronRight, Timer, Droplet, Target } from 'lucide-react';
-import { fetchChampionDetails } from '../api/champions';
+import { fetchChampionDetails } from '../types/champions';
 import { championsData } from '../data/championsData';
 
 interface ChampionModalProps {

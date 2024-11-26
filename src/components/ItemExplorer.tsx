@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useItems } from '../hooks/useItems';
 import { Search } from 'lucide-react';
-import { Item } from '../types';
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import ItemCard from './ItemCard';
@@ -25,7 +24,6 @@ export default function ItemExplorer() {
     let filtered = [...items];
 
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(item => item.category === selectedCategory);
     }
 
     if (searchQuery) {

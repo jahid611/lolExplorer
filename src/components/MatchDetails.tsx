@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Match, Participant } from '../types/player';
+import { Match, Participant,  } from '../types/player';
 import { 
   getChampionIconUrl, 
   getItemIconUrl, 
@@ -17,14 +17,14 @@ interface MatchDetailsProps {
   onChampionClick: (championName: string) => void;
 }
 
-export default function MatchDetails({ match, participant, onChampionClick }: MatchDetailsProps) {
+export default function MatchDetails({ match, onChampionClick }: MatchDetailsProps) {
   const [tooltip, setTooltip] = useState<{
     content: React.ReactNode;
     position: { x: number; y: number };
   } | null>(null);
   const [summonerSpells, setSummonerSpells] = useState<Record<string, any>>({});
   const [runes, setRunes] = useState<Record<number, any>>({});
-  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const loadData = async () => {
@@ -60,9 +60,7 @@ export default function MatchDetails({ match, participant, onChampionClick }: Ma
     setTooltip(null);
   };
 
-  const handleImageError = (key: string) => {
-    setImageErrors(prev => ({ ...prev, [key]: true }));
-  };
+
 
   const getSummonerSpellUrl = (spellId: number) => {
     const spell = Object.values(summonerSpells).find(s => s.key === spellId.toString());
@@ -126,7 +124,7 @@ export default function MatchDetails({ match, participant, onChampionClick }: Ma
                 alt={player.championName}
                 className="w-8 h-8 rounded-full transition-colors"
                 loading="lazy"
-                onError={() => handleImageError(`champion-${player.championName}`)}
+              
               />
             </div>
             <div className="flex flex-col gap-0.5">
@@ -135,13 +133,13 @@ export default function MatchDetails({ match, participant, onChampionClick }: Ma
                   src={getSummonerSpellUrl(player.summoner1Id)}
                   alt="Summoner 1"
                   className="w-3 h-3 rounded-sm bg-[#1E2328]"
-                  onError={() => handleImageError(`spell-${player.summoner1Id}`)}
+                  
                 />
                 <img
                   src={getSummonerSpellUrl(player.summoner2Id)}
                   alt="Summoner 2"
                   className="w-3 h-3 rounded-sm bg-[#1E2328]"
-                  onError={() => handleImageError(`spell-${player.summoner2Id}`)}
+                  
                 />
               </div>
               <div className="flex gap-0.5">
@@ -151,7 +149,6 @@ export default function MatchDetails({ match, participant, onChampionClick }: Ma
                     src={getRuneUrl(style.style)}
                     alt={`Rune ${idx + 1}`}
                     className="w-3 h-3 bg-[#1E2328]"
-                    onError={() => handleImageError(`rune-${style.style}`)}
                   />
                 ))}
               </div>
@@ -235,8 +232,7 @@ export default function MatchDetails({ match, participant, onChampionClick }: Ma
                   alt={`Item ${idx + 1}`}
                   className="w-full h-full object-cover"
                   loading="lazy"
-                  onError={() => handleImageError(`item-${itemId}`)}
-                />
+                                  />
               </div>
             ) : (
               <div key={idx} className="w-5 h-5 bg-[#1E2328] rounded-sm" />
@@ -249,26 +245,27 @@ export default function MatchDetails({ match, participant, onChampionClick }: Ma
 
   // Calculate team objectives
   const team1Objectives = {
-    dragons: match.info.teams[0].objectives.dragon.kills,
-    barons: match.info.teams[0].objectives.baron.kills,
-    towers: match.info.teams[0].objectives.tower.kills,
-    inhibitors: match.info.teams[0].objectives.inhibitor.kills,
-    heralds: match.info.teams[0].objectives.riftHerald.kills,
-    voidgrubs: match.info.teams[0].objectives.voidgrub?.kills || 0,
-    kills: match.info.teams[0].objectives.champion.kills,
-    gold: team1.reduce((sum, p) => sum + p.goldEarned, 0),
-  }
-
+    dragons: match.info?.teams?.[0]?.objectives?.dragon?.kills || 0,
+    barons: match.info?.teams?.[0]?.objectives?.baron?.kills || 0,
+    towers: match.info?.teams?.[0]?.objectives?.tower?.kills || 0,
+    inhibitors: match.info?.teams?.[0]?.objectives?.inhibitor?.kills || 0,
+    heralds: match.info?.teams?.[0]?.objectives?.riftHerald?.kills || 0,
+    voidgrubs: match.info?.teams?.[0]?.objectives?.voidgrub?.kills || 0, // Valeur par défaut à 0 si indéfini
+    kills: match.info?.teams?.[0]?.objectives?.champion?.kills || 0,
+    gold: Array.isArray(team1) ? team1.reduce((sum, p) => sum + (p.goldEarned || 0), 0) : 0, // Vérifie si team1 est un tableau
+  };
+  
   const team2Objectives = {
-    dragons: match.info.teams[1].objectives.dragon.kills,
-    barons: match.info.teams[1].objectives.baron.kills,
-    towers: match.info.teams[1].objectives.tower.kills,
-    inhibitors: match.info.teams[1].objectives.inhibitor.kills,
-    heralds: match.info.teams[1].objectives.riftHerald.kills,
-    voidgrubs: match.info.teams[1].objectives.voidgrub?.kills || 0,
-    kills: match.info.teams[1].objectives.champion.kills,
-    gold: team2.reduce((sum, p) => sum + p.goldEarned, 0),
-  }
+    dragons: match.info?.teams?.[1]?.objectives?.dragon?.kills || 0,
+    barons: match.info?.teams?.[1]?.objectives?.baron?.kills || 0,
+    towers: match.info?.teams?.[1]?.objectives?.tower?.kills || 0,
+    inhibitors: match.info?.teams?.[1]?.objectives?.inhibitor?.kills || 0,
+    heralds: match.info?.teams?.[1]?.objectives?.riftHerald?.kills || 0,
+    voidgrubs: match.info?.teams?.[1]?.objectives?.voidgrub?.kills || 0, // Valeur par défaut à 0 si indéfini
+    kills: match.info?.teams?.[1]?.objectives?.champion?.kills || 0,
+    gold: Array.isArray(team2) ? team2.reduce((sum, p) => sum + (p.goldEarned || 0), 0) : 0, // Vérifie si team2 est un tableau
+  };
+  
 
   return (
     <div className="space-y-1 overflow-x-auto">

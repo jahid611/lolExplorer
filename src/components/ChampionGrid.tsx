@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Champion } from '../types/champions';
-import { API_VERSION } from '../api/items';
 
 interface ChampionGridProps {
   champions: Champion[];

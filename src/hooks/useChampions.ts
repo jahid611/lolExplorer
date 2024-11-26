@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Champion } from '../types/champions';
-import { fetchChampions } from '../api/champions';
+import { fetchChampions } from '../types/champions';
 
 export const useChampions = () => {
   const [champions, setChampions] = useState<Champion[]>([]);

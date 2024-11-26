@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Tooltip } from './Tooltip';
 import { Match, Participant } from '../types/player';
-import { getChampionIcon, getItemIcon, getRankIcon } from '../api/riot';
+import { getChampionIcon, getItemIcon, } from '../api/riot';
 
 interface MatchCardProps {
   match: Match;
@@ -13,27 +12,9 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, participant }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const kda = ((participant.kills + participant.assists) / Math.max(1, participant.deaths)).toFixed(2);
 
-  const getItemTooltip = (itemId: number) => {
-    // Simuler le contenu de l'infobulle de l'objet
-    return (
-      <div className="space-y-2">
-        <h3 className="font-bold text-[#F0B232]">Nom de l'objet</h3>
-        <p className="text-sm text-gray-300">Description détaillée de l'objet...</p>
-        <div className="text-sm text-[#F0B232]">
-          Prix: 3000 (2000)
-        </div>
-      </div>
-    );
-  };
 
-  const getChampionTooltip = (championName: string) => {
-    return (
-      <div className="space-y-2">
-        <h3 className="font-bold text-[#F0B232]">{championName}</h3>
-        <p className="text-sm text-gray-300">Description du champion...</p>
-      </div>
-    );
-  };
+
+
 
   return (
     <div className="bg-[#1A1C21] rounded-lg overflow-hidden">
@@ -45,13 +26,11 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, participant }) => {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex-shrink-0">
-          <Tooltip content={getChampionTooltip(participant.championName)}>
             <img
               src={getChampionIcon(participant.championName)}
               alt={participant.championName}
               className="w-12 h-12 rounded-lg"
             />
-          </Tooltip>
         </div>
 
         <div className="flex-grow">
@@ -76,13 +55,12 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, participant }) => {
           ].map((itemId, idx) => (
             <div key={idx}>
               {itemId > 0 ? (
-                <Tooltip content={getItemTooltip(itemId)}>
                   <img
                     src={getItemIcon(itemId)}
                     alt={`Item ${idx + 1}`}
                     className="w-8 h-8 rounded"
                   />
-                </Tooltip>
+                
               ) : (
                 <div className="w-8 h-8 bg-[#1E2328] rounded" />
               )}
@@ -110,14 +88,12 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, participant }) => {
                 .filter(p => p.teamId === 100)
                 .map(p => (
                   <div key={p.puuid} className="flex items-center gap-2">
-                    <Tooltip content={getChampionTooltip(p.championName)}>
                       <img
                         src={getChampionIcon(p.championName)}
                         alt={p.championName}
                         className="w-6 h-6 rounded"
                       />
-                    </Tooltip>
-                    <span className="text-sm">{p.summonerName}</span>
+*                    <span className="text-sm">{p.summonerName}</span>
                   </div>
                 ))}
             </div>
@@ -129,13 +105,11 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, participant }) => {
                 .filter(p => p.teamId === 200)
                 .map(p => (
                   <div key={p.puuid} className="flex items-center gap-2">
-                    <Tooltip content={getChampionTooltip(p.championName)}>
                       <img
                         src={getChampionIcon(p.championName)}
                         alt={p.championName}
                         className="w-6 h-6 rounded"
                       />
-                    </Tooltip>
                     <span className="text-sm">{p.summonerName}</span>
                   </div>
                 ))}
@@ -152,7 +126,6 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, participant }) => {
               </div>
               <div>
                 <p>Dégâts: {participant.totalDamageDealtToChampions}</p>
-                <p>Or: {participant.goldEarned}</p>
               </div>
               <div>
                 <p>Durée: {Math.floor(match.info.gameDuration / 60)}min</p>

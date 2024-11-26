@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { PlayerData, Match, Participant } from '../types/player';
 import { getProfileIconUrl, getRankIcon } from '../api/riot';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -13,6 +12,10 @@ interface PlayerCardProps {
   data: PlayerData;
   requestedMatches: number;
 }
+
+
+
+
 
 const PlayerCard: React.FC<PlayerCardProps> = ({ data, requestedMatches }) => {
   const { gameName, tagLine, profileIconId, summonerLevel, puuid, ranks = [], recentMatches = [] } = data;

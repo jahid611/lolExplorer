@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChampionTooltip } from '../components/ChampionTooltip';
+import { ChampionTooltip } from './ChampionTooltip';
 import { getChampionIconUrl } from '../utils/api';
 
 const ChampionsPage: React.FC = () => {

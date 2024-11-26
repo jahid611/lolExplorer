@@ -63,4 +63,19 @@ export interface PlayerData {
   ranks?: RankedInfo[];
   recentMatches?: Match[];
 }
+interface TeamObjectives {
+  kills: number; // Vous pouvez ajouter d'autres propriétés si nécessaire
+}
 
+
+interface Team {
+  objectives: {
+    dragon: TeamObjectives;
+    baron: TeamObjectives;
+    tower: TeamObjectives;
+    inhibitor: TeamObjectives;
+    riftHerald: TeamObjectives;
+    voidgrub?: TeamObjectives; // Facultatif
+    champion: TeamObjectives;
+  };
+}

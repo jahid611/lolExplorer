@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
+import React, { createContext, useState, useContext, useRef } from 'react';
 
 interface TooltipContextType {
   showTooltip: (content: React.ReactNode, event: React.MouseEvent) => void;

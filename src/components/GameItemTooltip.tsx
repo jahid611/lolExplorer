@@ -19,7 +19,7 @@ interface GameItemTooltipProps {
 
 const GameItemTooltip: React.FC<GameItemTooltipProps> = ({ itemId, children }) => {
   const [itemData, setItemData] = useState<ItemData | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  
 
   useEffect(() => {
     const fetchItemData = async () => {
@@ -40,10 +40,10 @@ const GameItemTooltip: React.FC<GameItemTooltipProps> = ({ itemId, children }) =
         }
 
         setItemData(data.data[itemId]);
-        setError(null);
+        
       } catch (err) {
         console.error('Error fetching item data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load item data');
+        
       }
     };
 

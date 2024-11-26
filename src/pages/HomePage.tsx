@@ -60,7 +60,6 @@ const HomePage: React.FC = () => {
             </div>
             <div className="relative w-[600px] h-[600px]">
               <img
-                src={championImages[activeChampionType]}
                 alt="Champion"
                 className="w-[110%] h-[110%] object-contain rounded-full"
               />
