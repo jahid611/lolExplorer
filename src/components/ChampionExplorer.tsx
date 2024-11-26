@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useChampions } from '../hooks/useChampions';
 import SearchBar from './SearchBar';
 import ChampionFilters from './ChampionFilters';

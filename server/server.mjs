@@ -19,8 +19,9 @@ if (!RIOT_API_KEY) {
   process.exit(1);
 }
 
+// Configurez CORS pour autoriser les requêtes provenant de tous les domaines
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: '*', // Vous pouvez restreindre cela à votre domaine spécifique si nécessaire
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
@@ -142,4 +143,3 @@ app.listen(PORT, () => {
   console.log(`- GET /api/account/by-riot-id/:gameName/:tagLine`);
   console.log(`========================\n`);
 });
-
